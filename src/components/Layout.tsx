@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Scissors, Calendar, Users, Package, LayoutDashboard } from 'lucide-react';
 
@@ -22,23 +21,21 @@ export default function Layout() {
               <Scissors className="h-8 w-8" />
               <span className="ml-2 text-xl font-bold">SalonSync</span>
             </div>
-            <div className="hidden md:block">
-              <div className="flex items-center space-x-4">
-                {navItems.map(({ to, label, icon: Icon }) => (
-                  <Link
-                    key={to}
-                    to={to}
-                    className={`${
-                      location.pathname === to
-                        ? 'bg-purple-700'
-                        : 'hover:bg-purple-500'
-                    } px-3 py-2 rounded-md text-sm font-medium flex items-center`}
-                  >
-                    <Icon className="h-4 w-4 mr-2" />
-                    {label}
-                  </Link>
-                ))}
-              </div>
+            <div className="hidden md:flex items-center space-x-4">
+              {navItems.map(({ to, label, icon: Icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className={`${
+                    location.pathname === to
+                      ? 'bg-purple-700'
+                      : 'hover:bg-purple-500'
+                  } px-3 py-2 rounded-md text-sm font-medium flex items-center`}
+                >
+                  <Icon className="h-4 w-4 mr-2" />
+                  {label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>

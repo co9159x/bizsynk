@@ -11,18 +11,22 @@ export interface ServiceRecord {
 export interface Staff {
   id?: string;
   name: string;
-  role: 'owner' | 'staff';
+  role: 'Barber' | 'Stylist';
+  email: string | null;
+  phone: string | null;
   status: 'in' | 'out';
-  lastClockIn?: string;
-  lastClockOut?: string;
+  lastClockIn: string | null;
+  lastClockOut: string | null;
+  category?: string;
 }
 
 export interface InventoryItem {
   id?: string;
   name: string;
   quantity: number;
-  alertLevel: number;
+  lastUsed?: string;
+  lastUsedBy?: string;
 }
 
 export const SERVICES = ['Braiding', 'Haircut', 'Manicure'] as const;
-export const PAYMENT_METHODS = ['Cash', 'Card', 'Mobile'] as const;
+export const PAYMENT_METHODS = ['Cash', 'Card', 'Transfer'] as const;
