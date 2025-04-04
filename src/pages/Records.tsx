@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { SERVICES, PAYMENT_METHODS, type ServiceRecord } from '../types';
+import { SERVICES, PAYMENT_METHODS } from '../constants';
+import { type ServiceRecord, Staff } from '../types';
 import { formatCurrency } from '../utils/format';
-import { addServiceRecord, getServiceRecords } from '../lib/firebase/client-services';
-
-// Add staff data
-const STAFF = [
-  'John Doe',
-  'Jane Smith',
-  'Mike Johnson',
-  'Sarah Williams'
-];
+import { addServiceRecord, getServiceRecords, getStaff } from '../lib/firebase/client-services';
 
 export default function Records() {
   const [records, setRecords] = useState<ServiceRecord[]>([]);
@@ -25,6 +18,13 @@ export default function Records() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [staff, setStaff] = useState<Staff[]>([]);
+  const [selectedStaff, setSelectedStaff] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedService, setSelectedService] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [price, setPrice] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
 
   useEffect(() => {
     const fetchRecords = async () => {
@@ -40,7 +40,17 @@ export default function Records() {
       }
     };
 
+    const fetchStaff = async () => {
+      try {
+        const staffData = await getStaff();
+        setStaff(staffData);
+      } catch (error) {
+        console.error('Error fetching staff:', error);
+      }
+    };
+
     fetchRecords();
+    fetchStaff();
   }, [today]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,9 +136,24 @@ export default function Records() {
               required
             >
               <option value="">Select Staff</option>
-              {STAFF.map(staffMember => (
-                <option key={staffMember} value={staffMember}>{staffMember}</option>
-              ))}
+              <optgroup label="Barbers">
+                {staff
+                  .filter(member => member.role === 'Barber')
+                  .map((member) => (
+                    <option key={member.id} value={member.name}>
+                      {member.name}
+                    </option>
+                  ))}
+              </optgroup>
+              <optgroup label="Stylists">
+                {staff
+                  .filter(member => member.role === 'Stylist')
+                  .map((member) => (
+                    <option key={member.id} value={member.name}>
+                      {member.name}
+                    </option>
+                  ))}
+              </optgroup>
             </select>
           </div>
           <div>
@@ -182,7 +207,7 @@ export default function Records() {
             >
               <option value="">Select Payment Method</option>
               {PAYMENT_METHODS.map(method => (
-                <option key={method} value={method}>{method}</option>
+                <option key={method} value={method.toLowerCase()}>{method}</option>
               ))}
             </select>
           </div>
