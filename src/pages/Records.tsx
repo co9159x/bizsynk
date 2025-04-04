@@ -19,12 +19,6 @@ export default function Records() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [staff, setStaff] = useState<Staff[]>([]);
-  const [selectedStaff, setSelectedStaff] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedService, setSelectedService] = useState('');
-  const [clientName, setClientName] = useState('');
-  const [price, setPrice] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('cash');
 
   useEffect(() => {
     const fetchRecords = async () => {
@@ -53,23 +47,30 @@ export default function Records() {
     fetchStaff();
   }, [today]);
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
       setLoading(true);
       setError('');
       
-      const newRecord: Omit<ServiceRecord, 'id'> = {
+      const record: ServiceRecord = {
         date: formData.date,
         staff: formData.staff,
         clientName: formData.clientName,
         service: formData.service,
-        price: parseFloat(formData.price),
+        price: Number(formData.price),
         paymentMethod: formData.paymentMethod
       };
-      
-      await handleAddRecord(newRecord);
+
+      await addServiceRecord(record);
       
       // Reset form
       setFormData({
@@ -80,30 +81,15 @@ export default function Records() {
         price: '',
         paymentMethod: ''
       });
+
+      // Refresh records
+      const updatedRecords = await getServiceRecords(today);
+      setRecords(updatedRecords);
     } catch (error) {
       console.error('Error adding record:', error);
       setError('Failed to add record. Please try again.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleAddRecord = async (record: ServiceRecord) => {
-    try {
-      const addedRecord = await addServiceRecord(record);
-      if (addedRecord && typeof addedRecord !== 'boolean') {
-        setRecords(prev => [addedRecord, ...prev]);
-      }
-    } catch (error) {
-      console.error('Error adding record:', error);
     }
   };
 
@@ -126,6 +112,7 @@ export default function Records() {
               required
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Staff *</label>
             <select 
@@ -156,6 +143,7 @@ export default function Records() {
               </optgroup>
             </select>
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Client Name *</label>
             <input
@@ -168,6 +156,7 @@ export default function Records() {
               required
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Service *</label>
             <select 
@@ -183,6 +172,7 @@ export default function Records() {
               ))}
             </select>
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Price (₦) *</label>
             <input
@@ -196,6 +186,7 @@ export default function Records() {
               min="0"
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Payment Method *</label>
             <select 
@@ -211,6 +202,7 @@ export default function Records() {
               ))}
             </select>
           </div>
+
           <div className="md:col-span-2">
             {error && (
               <div className="mb-4 text-red-500 text-sm">
