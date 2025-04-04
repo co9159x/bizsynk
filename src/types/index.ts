@@ -24,6 +24,7 @@ export interface InventoryItem {
   id?: string;
   name: string;
   quantity: number;
+  alertLevel: number;
   lastUsed?: string;
   lastUsedBy?: string;
 }

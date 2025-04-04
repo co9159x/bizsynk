@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Package, AlertTriangle } from 'lucide-react';
 import type { InventoryItem } from '../types';
 

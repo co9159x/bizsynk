@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { BarChart3, Users, Package, AlertTriangle, DollarSign } from 'lucide-react';
+import { useState } from 'react';
+import { BarChart3, Users, AlertTriangle, DollarSign } from 'lucide-react';
 import type { ServiceRecord, Staff, InventoryItem } from '../types';
 import { formatCurrency } from '../utils/format';
 
