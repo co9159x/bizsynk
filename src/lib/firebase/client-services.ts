@@ -8,8 +8,7 @@ import {
   where, 
   orderBy, 
   writeBatch, 
-  doc, 
-  setDoc,
+  doc,
   Timestamp
 } from 'firebase/firestore';
 

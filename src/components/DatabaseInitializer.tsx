@@ -1,13 +1,20 @@
 import { useEffect, useState } from 'react';
 import { initializeDatabase, isDatabaseInitialized } from '../lib/firebase/client-initDb';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function DatabaseInitializer() {
   const [isInitialized, setIsInitialized] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<string>('Checking database status...');
+  const [status, setStatus] = useState<string>('Waiting for authentication...');
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     async function checkAndInitializeDatabase() {
+      if (!currentUser) {
+        setStatus('Waiting for authentication...');
+        return;
+      }
+
       try {
         setStatus('Checking if database is initialized...');
         // Check if database is already initialized
@@ -41,7 +48,7 @@ export default function DatabaseInitializer() {
     }
 
     checkAndInitializeDatabase();
-  }, []);
+  }, [currentUser]);
 
   if (error) {
     return (

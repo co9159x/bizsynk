@@ -1,14 +1,18 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, UserCredential } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
   error: string | null;
-  signUp: (email: string, password: string) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<UserCredential>;
+  signIn: (email: string, password: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
+}
+
+interface AuthProviderProps {
+  children: ReactNode;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -19,10 +23,6 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
-
-interface AuthProviderProps {
-  children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
@@ -40,15 +40,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   async function signUp(email: string, password: string) {
-    return createUserWithEmailAndPassword(auth, email, password);
+    try {
+      return await createUserWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sign up');
+      throw err;
+    }
   }
 
   async function signIn(email: string, password: string) {
-    return signInWithEmailAndPassword(auth, email, password);
+    try {
+      return await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in');
+      throw err;
+    }
   }
 
   async function logout() {
-    return signOut(auth);
+    try {
+      return await signOut(auth);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to log out');
+      throw err;
+    }
   }
 
   const value = {
