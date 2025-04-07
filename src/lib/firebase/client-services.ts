@@ -1,5 +1,5 @@
 import { db } from './config';
-import { ServiceRecord, Staff } from '../../types/index.js';
+import { ServiceRecord, Staff, InventoryItem } from '../../types/index.js';
 import { 
   collection, 
   getDocs, 
@@ -9,7 +9,8 @@ import {
   orderBy, 
   writeBatch, 
   doc,
-  Timestamp
+  Timestamp,
+  updateDoc
 } from 'firebase/firestore';
 
 export const clearStaffCollection = async () => {
@@ -101,5 +102,48 @@ export const addMultipleStaff = async (staffList: Omit<Staff, 'id'>[]) => {
   } catch (error) {
     console.error('Error adding multiple staff:', error);
     throw error;
+  }
+};
+
+export const getInventory = async () => {
+  try {
+    const inventoryRef = collection(db, 'inventory');
+    const snapshot = await getDocs(inventoryRef);
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as InventoryItem[];
+  } catch (error) {
+    console.error('Error getting inventory:', error);
+    return [];
+  }
+};
+
+export const addInventoryItem = async (item: Omit<InventoryItem, 'id'>) => {
+  try {
+    const inventoryRef = collection(db, 'inventory');
+    await addDoc(inventoryRef, {
+      ...item,
+      createdAt: Timestamp.now()
+    });
+    return true;
+  } catch (error) {
+    console.error('Error adding inventory item:', error);
+    return false;
+  }
+};
+
+export const updateInventoryItem = async (id: string, updates: Partial<InventoryItem>) => {
+  try {
+    const itemRef = doc(db, 'inventory', id);
+    await updateDoc(itemRef, {
+      ...updates,
+      updatedAt: Timestamp.now()
+    });
+    return true;
+  } catch (error) {
+    console.error('Error updating inventory item:', error);
+    return false;
   }
 }; 
