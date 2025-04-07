@@ -65,6 +65,22 @@ export const getServiceRecords = async (date?: string) => {
     })) as ServiceRecord[];
   } catch (error) {
     console.error('Error getting service records:', error);
+    if (error instanceof Error && error.message.includes('index')) {
+      try {
+        const recordsRef = collection(db, 'records');
+        const q = date 
+          ? query(recordsRef, where('date', '==', date))
+          : query(recordsRef);
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as ServiceRecord[];
+      } catch (fallbackError) {
+        console.error('Error with fallback query:', fallbackError);
+        return [];
+      }
+    }
     return [];
   }
 };
@@ -145,5 +161,39 @@ export const updateInventoryItem = async (id: string, updates: Partial<Inventory
   } catch (error) {
     console.error('Error updating inventory item:', error);
     return false;
+  }
+};
+
+export const getServices = async () => {
+  try {
+    const servicesRef = collection(db, 'services');
+    const snapshot = await getDocs(servicesRef);
+    
+    const services = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    // Group services by category
+    const groupedServices = services.reduce((acc, service) => {
+      const category = service.category || 'Other';
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push({
+        name: service.name,
+        price: service.price
+      });
+      return acc;
+    }, {} as Record<string, { name: string; price: number }[]>);
+
+    // Convert to the format expected by the UI
+    return Object.entries(groupedServices).map(([category, services]) => ({
+      category,
+      services
+    }));
+  } catch (error) {
+    console.error('Error getting services:', error);
+    return [];
   }
 }; 

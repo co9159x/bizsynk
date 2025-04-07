@@ -1,5 +1,14 @@
-// Service data from GMG Hair Salon
-export const servicesData = [
+interface Service {
+  name: string;
+  price: number;
+}
+
+interface ServiceCategory {
+  category: string;
+  services: Service[];
+}
+
+export const servicesData: ServiceCategory[] = [
   {
     category: "Haircuts",
     services: [
