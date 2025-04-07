@@ -4,6 +4,7 @@ import { SERVICES, PAYMENT_METHODS } from '../constants';
 import { type ServiceRecord, Staff } from '../types';
 import { formatCurrency } from '../utils/format';
 import { addServiceRecord, getServiceRecords, getStaff } from '../lib/firebase/client-services';
+import SearchableStaffSelect from '../components/SearchableStaffSelect';
 
 export default function Records() {
   const [records, setRecords] = useState<ServiceRecord[]>([]);
@@ -115,33 +116,12 @@ export default function Records() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Staff *</label>
-            <select 
-              name="staff"
+            <SearchableStaffSelect
               value={formData.staff}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+              onChange={(value) => handleChange({ target: { name: 'staff', value } } as any)}
               required
-            >
-              <option value="">Select Staff</option>
-              <optgroup label="Barbers">
-                {staff
-                  .filter(member => member.role === 'Barber')
-                  .map((member) => (
-                    <option key={member.id} value={member.name}>
-                      {member.name}
-                    </option>
-                  ))}
-              </optgroup>
-              <optgroup label="Stylists">
-                {staff
-                  .filter(member => member.role === 'Stylist')
-                  .map((member) => (
-                    <option key={member.id} value={member.name}>
-                      {member.name}
-                    </option>
-                  ))}
-              </optgroup>
-            </select>
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+            />
           </div>
 
           <div>
