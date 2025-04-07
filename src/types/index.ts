@@ -18,6 +18,7 @@ export interface Staff {
   lastClockIn: string | null;
   lastClockOut: string | null;
   category?: string;
+  userId?: string;
 }
 
 export interface InventoryItem {

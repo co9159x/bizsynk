@@ -6,10 +6,13 @@ import { formatCurrency } from '../utils/format';
 import { addServiceRecord, getServiceRecords, getStaff } from '../lib/firebase/client-services';
 import SearchableStaffSelect from '../components/SearchableStaffSelect';
 import SearchableServiceSelect from '../components/SearchableServiceSelect';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Records() {
+  const { currentUser } = useAuth();
   const [records, setRecords] = useState<ServiceRecord[]>([]);
   const today = format(new Date(), 'yyyy-MM-dd');
+  const [selectedDate, setSelectedDate] = useState(today);
   const [formData, setFormData] = useState({
     date: today,
     staff: '',
@@ -21,17 +24,27 @@ export default function Records() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [staff, setStaff] = useState<Staff[]>([]);
+  const [currentStaff, setCurrentStaff] = useState<Staff | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [todayRecords, staffData] = await Promise.all([
-          getServiceRecords(today),
-          getStaff()
-        ]);
-        setRecords(todayRecords);
+        const staffData = await getStaff();
         setStaff(staffData);
+
+        // Find the current staff member based on user ID
+        if (currentUser) {
+          const staffMember = staffData.find(s => s.userId === currentUser.uid);
+          setCurrentStaff(staffMember || null);
+          if (staffMember) {
+            setFormData(prev => ({ ...prev, staff: staffMember.id || '' }));
+          }
+        }
+
+        // Fetch records for the selected date
+        const dateRecords = await getServiceRecords(selectedDate);
+        setRecords(dateRecords);
       } catch (error) {
         console.error('Error fetching data:', error);
         setError('Failed to load data. Please try again.');
@@ -41,7 +54,7 @@ export default function Records() {
     };
 
     fetchData();
-  }, [today]);
+  }, [currentUser, selectedDate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -49,6 +62,10 @@ export default function Records() {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(e.target.value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,15 +83,15 @@ export default function Records() {
         // Reset form
         setFormData({
           date: today,
-          staff: '',
+          staff: currentStaff?.id || '',
           clientName: '',
           service: '',
           price: '',
           paymentMethod: ''
         });
         // Refresh records
-        const todayRecords = await getServiceRecords(today);
-        setRecords(todayRecords);
+        const dateRecords = await getServiceRecords(selectedDate);
+        setRecords(dateRecords);
       }
     } catch (error) {
       console.error('Error adding record:', error);
@@ -84,9 +101,27 @@ export default function Records() {
     }
   };
 
+  // Filter records based on current staff member
+  const filteredRecords = currentStaff 
+    ? records.filter(record => record.staff === currentStaff.id)
+    : records;
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">Service Records</h1>
+      
+      {/* Date Filter */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center space-x-4">
+          <label className="text-sm font-medium text-gray-700">Select Date:</label>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={handleDateChange}
+            className="rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+          />
+        </div>
+      </div>
       
       {/* Add New Record Form */}
       <div className="bg-white rounded-lg shadow p-6">
@@ -111,6 +146,7 @@ export default function Records() {
               value={formData.staff}
               onChange={(value) => setFormData(prev => ({ ...prev, staff: value }))}
               required
+              disabled={!!currentStaff}
             />
           </div>
 
@@ -179,14 +215,17 @@ export default function Records() {
         </form>
       </div>
 
-      {/* Today's Records Table */}
+      {/* Records Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Today's Records</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            Records for {format(new Date(selectedDate), 'MMMM d, yyyy')}
+            {currentStaff && ` - ${currentStaff.name}`}
+          </h2>
           {loading ? (
             <p className="text-gray-500 text-center py-4">Loading records...</p>
-          ) : records.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No records for today</p>
+          ) : filteredRecords.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">No records for this date</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -201,7 +240,7 @@ export default function Records() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {records.map((record) => (
+                  {filteredRecords.map((record) => (
                     <tr key={record.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {format(new Date(record.date), 'hh:mm a')}
