@@ -28,3 +28,14 @@ export interface InventoryItem {
   lastUsed?: string;
   lastUsedBy?: string;
 }
+
+export interface AttendanceRecord {
+  id?: string;
+  staffId: string;
+  staffName: string;
+  date: string;
+  timeIn: string | null;
+  timeOut: string | null;
+  status: 'present' | 'absent' | 'late';
+  notes?: string;
+}

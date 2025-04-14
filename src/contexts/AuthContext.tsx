@@ -1,12 +1,18 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, UserCredential } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+
+interface UserRole {
+  role: string;
+}
 
 interface AuthContextType {
   currentUser: User | null;
+  userRole: string | null;
   loading: boolean;
   error: string | null;
-  signUp: (email: string, password: string) => Promise<UserCredential>;
+  signUp: (email: string, password: string, role: string, firstName: string, lastName: string) => Promise<UserCredential>;
   signIn: (email: string, password: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
 }
@@ -27,21 +33,50 @@ export function useAuth() {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       setCurrentUser(user);
+      
+      if (user) {
+        // Fetch user role from Firestore
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data() as UserRole;
+            setUserRole(userData.role);
+          }
+        } catch (err) {
+          console.error('Error fetching user role:', err);
+          setUserRole(null);
+        }
+      } else {
+        setUserRole(null);
+      }
+      
       setLoading(false);
     });
 
     return unsubscribe;
   }, []);
 
-  async function signUp(email: string, password: string) {
+  async function signUp(email: string, password: string, role: string, firstName: string, lastName: string) {
     try {
-      return await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Store additional user data in Firestore
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        email,
+        role,
+        firstName,
+        lastName,
+        createdAt: new Date().toISOString()
+      });
+
+      return userCredential;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign up');
       throw err;
@@ -68,6 +103,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const value = {
     currentUser,
+    userRole,
     loading,
     error,
     signUp,

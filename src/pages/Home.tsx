@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom';
 import { Calendar, Users, Package, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { useState, useEffect } from 'react';
 
-const features = [
+const staffFeatures = [
   {
     icon: Calendar,
     title: 'Daily Records',
@@ -19,7 +23,11 @@ const features = [
     title: 'Inventory Management',
     description: 'Track products and get low stock alerts',
     link: '/inventory'
-  },
+  }
+];
+
+const adminFeatures = [
+  ...staffFeatures,
   {
     icon: LayoutDashboard,
     title: 'Dashboard',
@@ -29,18 +37,36 @@ const features = [
 ];
 
 export default function Home() {
+  const { currentUser, userRole } = useAuth();
+  const [firstName, setFirstName] = useState<string>('');
+
+  useEffect(() => {
+    async function fetchUserData() {
+      if (currentUser) {
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setFirstName(userData.firstName || '');
+        }
+      }
+    }
+    fetchUserData();
+  }, [currentUser]);
+
+  const features = userRole === 'admin' ? adminFeatures : staffFeatures;
+
   return (
     <div className="py-12">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Welcome to SalonSync
+          Welcome{firstName ? ` ${firstName}` : ''} to SalonSync
         </h1>
         <p className="text-lg text-gray-600">
           Manage your salon efficiently with our comprehensive management system
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {features.map(({ icon: Icon, title, description, link }) => (
           <Link
             key={title}

@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import DatabaseInitializer from './components/DatabaseInitializer';
 import PrivateRoute from './components/PrivateRoute';
+import RoleBasedRoute from './components/RoleBasedRoute';
 
 // Lazy load pages
 const Home = lazy(() => import('./pages/Home'));
@@ -35,11 +36,24 @@ function App() {
             {/* Protected routes */}
             <Route element={<PrivateRoute />}>
               <Route element={<Layout />}>
+                {/* Common routes for all authenticated users */}
                 <Route index element={<Home />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="records" element={<Records />} />
-                <Route path="attendance" element={<Attendance />} />
-                <Route path="inventory" element={<Inventory />} />
+                
+                {/* Staff-only routes */}
+                <Route element={<RoleBasedRoute allowedRoles={['staff']} />}>
+                  <Route path="records" element={<Records />} />
+                  <Route path="attendance" element={<Attendance />} />
+                </Route>
+                
+                {/* Admin-only routes */}
+                <Route element={<RoleBasedRoute allowedRoles={['admin']} />}>
+                  <Route path="dashboard" element={<Dashboard />} />
+                </Route>
+                
+                {/* Routes accessible by both roles */}
+                <Route element={<RoleBasedRoute allowedRoles={['admin', 'staff']} />}>
+                  <Route path="inventory" element={<Inventory />} />
+                </Route>
               </Route>
             </Route>
           </Routes>

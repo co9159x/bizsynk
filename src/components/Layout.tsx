@@ -1,16 +1,35 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Scissors, Calendar, Users, Package, LayoutDashboard } from 'lucide-react';
+import { Scissors, Calendar, Users, Package, LayoutDashboard, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
-const navItems = [
+// Define navigation items for different roles
+const staffNavItems = [
   { to: '/', label: 'Home', icon: Scissors },
   { to: '/records', label: 'Records', icon: Calendar },
   { to: '/attendance', label: 'Attendance', icon: Users },
   { to: '/inventory', label: 'Inventory', icon: Package },
+];
+
+const adminNavItems = [
+  { to: '/', label: 'Home', icon: Scissors },
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/inventory', label: 'Inventory', icon: Package },
 ];
 
 export default function Layout() {
   const location = useLocation();
+  const { userRole, logout } = useAuth();
+  
+  // Determine which navigation items to show based on user role
+  const navItems = userRole === 'admin' ? adminNavItems : staffNavItems;
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Failed to log out:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -36,6 +55,13 @@ export default function Layout() {
                   {label}
                 </Link>
               ))}
+              <button
+                onClick={handleLogout}
+                className="hover:bg-purple-500 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -61,6 +87,13 @@ export default function Layout() {
               <span className="text-xs">{label}</span>
             </Link>
           ))}
+          <button
+            onClick={handleLogout}
+            className="text-gray-600 flex flex-col items-center py-2"
+          >
+            <LogOut className="h-6 w-6" />
+            <span className="text-xs">Logout</span>
+          </button>
         </div>
       </div>
     </div>

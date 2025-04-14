@@ -11,12 +11,13 @@
     "preview": "vite preview",
     "init-db": "npm run build-scripts && node dist/scripts/init-db.js",
     "add-staff": "npm run build-scripts && node dist/scripts/add-staff.js",
-    "check-staff": "npm run build-scripts && node dist/scripts/check-staff.js"
+    "check-staff": "npm run build-scripts && node dist/scripts/check-staff.js",
+    "initialize-db": "ts-node --esm src/scripts/initializeDatabase.ts"
   },
   "dependencies": {
     "@types/node": "^20.11.24",
-    "dotenv": "^16.4.7",
-    "firebase": "^10.8.0",
+    "dotenv": "^16.5.0",
+    "firebase": "^10.14.1",
     "firebase-admin": "^12.7.0",
     "lucide-react": "^0.344.0",
     "react": "^18.2.0",
