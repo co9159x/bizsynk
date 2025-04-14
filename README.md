@@ -1,51 +1,57 @@
 # SalonSync
 
-SalonSync is a comprehensive salon management system designed to streamline daily operations, track staff attendance, manage inventory, and monitor business performance.
+SalonSync is a modern web application designed to streamline salon management operations. It provides a comprehensive solution for managing staff, services, inventory, and client records.
 
 ## Features
 
-### 🕒 Attendance Management
-- Real-time clock in/out system with location verification
-- Automatic clock out at 9 PM for all staff
-- Staff status tracking with last clock in/out times
-- Location-based verification for Ahmadu Bello Way, Gudu, Abuja
+### Staff Management
+- Staff registration and authentication
+- Role-based access control (Admin/Staff)
+- Staff attendance tracking
+- Performance metrics and analytics
 
-### 📊 Dashboard
-- Real-time overview of salon operations
-- Daily revenue tracking
+### Service Management
+- Service catalog with pricing
+- Service record tracking
+- Revenue analytics
+- Client service history
+
+### Inventory Management
+- Real-time inventory tracking
+- Low stock alerts
+- Usage tracking
+- Category-based organization
+
+### Client Management
+- Client profiles
+- Service history
+- Appointment tracking
+- Notes and preferences
+
+### Dashboard
+- Real-time revenue tracking
 - Staff performance metrics
-- Service statistics
-- Low stock alerts
+- Attendance monitoring
+- Service analytics
+- Interactive charts and graphs
 
-### 📝 Daily Records
-- Service tracking
-- Client management
-- Payment processing
-- Staff assignment
-- Daily transaction history
+## Technology Stack
 
-### 📦 Inventory Management
-- Stock tracking
-- Low stock alerts
-- Product management
-- Inventory status monitoring
-
-## Tech Stack
-
-- React 18
-- TypeScript
-- Vite
-- Tailwind CSS
-- Firebase
-- React Router DOM
-- Lucide React Icons
+- **Frontend**: React with TypeScript
+- **Styling**: Tailwind CSS
+- **Authentication**: Firebase Authentication
+- **Database**: Firebase Firestore
+- **Charts**: Chart.js
+- **Date Handling**: date-fns
+- **Form Handling**: React Hook Form
+- **UI Components**: Headless UI
 
 ## Getting Started
 
 ### Prerequisites
-
-- Node.js (v16 or higher)
-- npm (v7 or higher)
+- Node.js (v14 or higher)
+- npm or yarn
+- Firebase account
 
 ### Installation
 
@@ -60,12 +66,15 @@ cd salonsync
 npm install
 ```
 
-3. Start the development server
+3. Set up Firebase
+- Create a new Firebase project
+- Enable Authentication and Firestore
+- Add your Firebase configuration to `src/lib/firebase/config.ts`
+
+4. Start the development server
 ```bash
 npm run dev
 ```
-
-4. Open your browser and navigate to `http://localhost:5173`
 
 ## Project Structure
 
@@ -73,39 +82,13 @@ npm run dev
 salonsync/
 ├── src/
 │   ├── components/     # Reusable UI components
-│   ├── pages/         # Page components
+│   ├── lib/           # Firebase configuration and services
+│   ├── pages/         # Application pages
 │   ├── types/         # TypeScript type definitions
-│   ├── utils/         # Utility functions
-│   └── lib/           # Third-party library configurations
+│   └── utils/         # Utility functions
 ├── public/            # Static assets
-└── ...config files
+└── firebase/          # Firebase configuration files
 ```
-
-## Features in Detail
-
-### Attendance System
-- Location-based verification for clock in/out
-- Automatic clock out at 9 PM
-- Staff status tracking
-- Real-time attendance monitoring
-
-### Dashboard
-- Daily revenue overview
-- Staff performance metrics
-- Service statistics
-- Inventory alerts
-
-### Records Management
-- Daily service tracking
-- Client information management
-- Payment processing
-- Staff assignment tracking
-
-### Inventory Control
-- Stock level monitoring
-- Low stock alerts
-- Product management
-- Inventory status tracking
 
 ## Contributing
 
