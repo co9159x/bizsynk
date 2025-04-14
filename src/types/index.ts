@@ -28,6 +28,7 @@ export interface InventoryItem {
   quantity: number;
   lastUsed?: string;
   lastUsedBy?: string;
+  createdAt?: string;
 }
 
 export interface AttendanceRecord {

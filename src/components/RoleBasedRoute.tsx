@@ -17,11 +17,28 @@ export default function RoleBasedRoute({ allowedRoles }: RoleBasedRouteProps) {
   }
 
   if (!currentUser) {
-    return <Navigate to="/login" />;
+    // Redirect to the appropriate login page based on the current path
+    const path = window.location.pathname;
+    if (path.startsWith('/admin')) {
+      return <Navigate to="/admin/login" />;
+    }
+    return <Navigate to="/staff/login" />;
   }
 
-  if (!userRole || !allowedRoles.includes(userRole)) {
-    return <Navigate to="/" />;
+  if (!userRole) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-600">Error: User role not found</div>
+      </div>
+    );
+  }
+
+  if (!allowedRoles.includes(userRole)) {
+    // Redirect to the appropriate home page based on the user's role
+    if (userRole === 'admin') {
+      return <Navigate to="/admin/dashboard" />;
+    }
+    return <Navigate to="/staff/records" />;
   }
 
   return <Outlet />;

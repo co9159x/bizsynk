@@ -141,7 +141,7 @@ export const addInventoryItem = async (item: Omit<InventoryItem, 'id'>) => {
     const inventoryRef = collection(db, 'inventory');
     await addDoc(inventoryRef, {
       ...item,
-      createdAt: Timestamp.now()
+      createdAt: item.createdAt || new Date().toISOString()
     });
     return true;
   } catch (error) {
@@ -155,7 +155,7 @@ export const updateInventoryItem = async (id: string, updates: Partial<Inventory
     const itemRef = doc(db, 'inventory', id);
     await updateDoc(itemRef, {
       ...updates,
-      updatedAt: Timestamp.now()
+      lastUsed: updates.lastUsed || new Date().toISOString()
     });
     return true;
   } catch (error) {

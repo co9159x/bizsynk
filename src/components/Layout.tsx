@@ -1,23 +1,22 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Scissors, Calendar, Users, Package, LayoutDashboard, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 // Define navigation items for different roles
 const staffNavItems = [
-  { to: '/', label: 'Home', icon: Scissors },
-  { to: '/records', label: 'Records', icon: Calendar },
-  { to: '/attendance', label: 'Attendance', icon: Users },
-  { to: '/inventory', label: 'Inventory', icon: Package },
+  { to: '/staff/records', label: 'Records', icon: Calendar },
+  { to: '/staff/attendance', label: 'Attendance', icon: Users },
+  { to: '/staff/inventory', label: 'Inventory', icon: Package },
 ];
 
 const adminNavItems = [
-  { to: '/', label: 'Home', icon: Scissors },
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/inventory', label: 'Inventory', icon: Package },
+  { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/admin/inventory', label: 'Inventory', icon: Package },
 ];
 
 export default function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { userRole, logout } = useAuth();
   
   // Determine which navigation items to show based on user role
@@ -26,6 +25,8 @@ export default function Layout() {
   const handleLogout = async () => {
     try {
       await logout();
+      // Redirect to appropriate login page based on role
+      navigate(userRole === 'admin' ? '/admin/login' : '/staff/login');
     } catch (error) {
       console.error('Failed to log out:', error);
     }
