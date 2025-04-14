@@ -19,7 +19,7 @@ export default function StaffLogin() {
       await signIn(email, password);
       // The AuthContext will handle setting the user role
       // If the user is not staff, they will be redirected by RoleBasedRoute
-      navigate('/staff/records');
+      navigate('/staff/home');
     } catch (error: any) {
       if (error.code === 'auth/invalid-credential') {
         setError('Invalid email or password');

@@ -1,0 +1,71 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Helper function to check if user is staff
+    function isStaff() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff';
+    }
+
+    // Allow initial setup - this will be removed after initialization
+    match /{document=**} {
+      allow read, write: if true;
+    }
+
+    // Staff collection rules
+    match /staff/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Services collection rules
+    match /services/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Inventory collection rules
+    match /inventory/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Records collection rules
+    match /records/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff() || isAdmin();
+    }
+
+    // Attendance collection rules
+    match /attendance/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff() || isAdmin();
+    }
+
+    // Clients collection rules
+    match /clients/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff() || isAdmin();
+    }
+
+    // Users collection rules
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}

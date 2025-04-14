@@ -4,7 +4,7 @@ import { getServices } from '../lib/firebase/client-services';
 
 interface Service {
   name: string;
-  category: string;
+  price: number;
 }
 
 interface ServiceCategory {
@@ -61,7 +61,7 @@ export default function SearchableServiceSelect({
   }, [isOpen]);
 
   // Filter services based on search term
-  const filteredServices = services.reduce((acc, category) => {
+  const filteredServices = services.reduce<ServiceCategory[]>((acc, category) => {
     const matchingServices = category.services.filter(service => {
       const searchLower = searchTerm.toLowerCase();
       return (
@@ -78,72 +78,51 @@ export default function SearchableServiceSelect({
     }
 
     return acc;
-  }, [] as ServiceCategory[]);
-
-  const selectedService = services
-    .flatMap(category => category.services)
-    .find(service => service.name === value);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    if (!isOpen) {
-      setIsOpen(true);
-    }
-  };
-
-  const handleServiceSelect = (serviceName: string) => {
-    onChange(serviceName);
-    setIsOpen(false);
-    setSearchTerm('');
-  };
+  }, []);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className={`relative ${className}`} ref={dropdownRef}>
       <div
-        className={`w-full p-2 border rounded-md cursor-pointer ${className}`}
+        className="w-full p-2 border rounded-md cursor-pointer flex items-center justify-between"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {selectedService ? selectedService.name : 'Select Service'}
+        {value || 'Select Service'}
       </div>
       
       {isOpen && (
         <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg">
-          <div className="p-2 border-b">
+          <div className="p-2">
             <div className="relative">
               <input
                 ref={inputRef}
                 type="text"
-                className="w-full p-2 pl-8 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                 placeholder="Search services..."
                 value={searchTerm}
-                onChange={handleSearchChange}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full p-2 pl-8 border rounded-md"
               />
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
             </div>
           </div>
+          
           <div className="max-h-60 overflow-y-auto">
-            {filteredServices.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
-                No services found matching "{searchTerm}"
-              </div>
-            ) : (
-              filteredServices.map((category) => (
-                <div key={category.category} className="border-b last:border-b-0">
-                  <div className="p-2 bg-gray-50 font-semibold text-sm text-gray-700">
-                    {category.category}
+            {filteredServices.map((category) => (
+              <div key={category.category} className="p-2">
+                <div className="font-medium text-gray-700">{category.category}</div>
+                {category.services.map((service) => (
+                  <div
+                    key={service.name}
+                    className="p-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => {
+                      onChange(service.name);
+                      setIsOpen(false);
+                    }}
+                  >
+                    {service.name}
                   </div>
-                  {category.services.map((service) => (
-                    <div
-                      key={service.name}
-                      className="p-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => handleServiceSelect(service.name)}
-                    >
-                      <div className="font-medium">{service.name}</div>
-                    </div>
-                  ))}
-                </div>
-              ))
-            )}
+                ))}
+              </div>
+            ))}
           </div>
         </div>
       )}

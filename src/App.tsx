@@ -55,7 +55,7 @@ function App() {
                   <Route path="attendance" element={<Attendance />} />
                   <Route path="inventory" element={<Inventory />} />
                   <Route path="home" element={<Home />} />
-                  <Route index element={<Navigate to="records" replace />} />
+                  <Route index element={<Navigate to="home" replace />} />
                 </Route>
               </Route>
             </Route>

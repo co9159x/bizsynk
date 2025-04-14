@@ -3,7 +3,7 @@ import { Calendar, Users, Package, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
 const staffFeatures = [
   {
@@ -43,7 +43,6 @@ const adminFeatures = [
 
 export default function Home() {
   const { currentUser, userRole } = useAuth();
-  const [firstName, setFirstName] = useState<string>('');
 
   useEffect(() => {
     async function fetchUserData() {
@@ -51,7 +50,9 @@ export default function Home() {
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          setFirstName(userData.firstName || '');
+          // Assuming you want to set the first name
+          // You might want to handle this differently based on your data structure
+          // For example, you might want to use a state to handle this
         }
       }
     }
@@ -64,7 +65,7 @@ export default function Home() {
     <div className="py-12">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Welcome{firstName ? ` ${firstName}` : ''} to SalonSync
+          Welcome to SalonSync
         </h1>
         <p className="text-lg text-gray-600">
           Manage your salon efficiently with our comprehensive management system

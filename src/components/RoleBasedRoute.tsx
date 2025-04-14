@@ -38,7 +38,7 @@ export default function RoleBasedRoute({ allowedRoles }: RoleBasedRouteProps) {
     if (userRole === 'admin') {
       return <Navigate to="/admin/dashboard" />;
     }
-    return <Navigate to="/staff/records" />;
+    return <Navigate to="/staff/home" />;
   }
 
   return <Outlet />;

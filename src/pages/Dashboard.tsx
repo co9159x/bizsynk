@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { BarChart3, Users, DollarSign, Clock } from 'lucide-react';
-import type { ServiceRecord, Staff, InventoryItem, AttendanceRecord } from '../types';
+import { BarChart3, Users, DollarSign } from 'lucide-react';
+import type { ServiceRecord, Staff, AttendanceRecord } from '../types';
 import { formatCurrency, formatDate, formatTime } from '../utils/format';
-import { collection, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Line } from 'react-chartjs-2';
 import {
@@ -30,7 +30,6 @@ ChartJS.register(
 export default function Dashboard() {
   const [serviceRecords, setServiceRecords] = useState<ServiceRecord[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [revenueData, setRevenueData] = useState<{ labels: string[]; data: number[] }>({

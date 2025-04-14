@@ -53,7 +53,7 @@ export default function SignUp() {
         createdAt: new Date().toISOString()
       });
 
-      navigate('/');
+      navigate('/staff/home');
     } catch (error) {
       setError('Failed to create an account. Please try again.');
       console.error(error);
