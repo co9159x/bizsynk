@@ -10,29 +10,34 @@ const staffFeatures = [
     icon: Calendar,
     title: 'Daily Records',
     description: 'Log and track daily services and transactions',
-    link: '/records'
+    link: '/staff/records'
   },
   {
     icon: Users,
     title: 'Attendance Monitoring',
     description: 'Monitor staff clock-in/out times',
-    link: '/attendance'
+    link: '/staff/attendance'
   },
   {
     icon: Package,
     title: 'Inventory Management',
     description: 'Track products and get low stock alerts',
-    link: '/inventory'
+    link: '/staff/inventory'
   }
 ];
 
 const adminFeatures = [
-  ...staffFeatures,
   {
     icon: LayoutDashboard,
     title: 'Dashboard',
     description: 'View reports and analytics',
-    link: '/dashboard'
+    link: '/admin/dashboard'
+  },
+  {
+    icon: Package,
+    title: 'Inventory Management',
+    description: 'Track products and get low stock alerts',
+    link: '/admin/inventory'
   }
 ];
 

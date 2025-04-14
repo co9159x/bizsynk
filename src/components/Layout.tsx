@@ -1,15 +1,17 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Scissors, Calendar, Users, Package, LayoutDashboard, LogOut } from 'lucide-react';
+import { Scissors, Calendar, Users, Package, LayoutDashboard, LogOut, Home } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 // Define navigation items for different roles
 const staffNavItems = [
+  { to: '/staff/home', label: 'Home', icon: Home },
   { to: '/staff/records', label: 'Records', icon: Calendar },
   { to: '/staff/attendance', label: 'Attendance', icon: Users },
   { to: '/staff/inventory', label: 'Inventory', icon: Package },
 ];
 
 const adminNavItems = [
+  { to: '/admin/home', label: 'Home', icon: Home },
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin/inventory', label: 'Inventory', icon: Package },
 ];

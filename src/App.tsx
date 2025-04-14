@@ -41,6 +41,7 @@ function App() {
                 <Route element={<Layout />}>
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="inventory" element={<Inventory />} />
+                  <Route path="home" element={<Home />} />
                   <Route index element={<Navigate to="dashboard" replace />} />
                 </Route>
               </Route>
@@ -53,6 +54,7 @@ function App() {
                   <Route path="records" element={<Records />} />
                   <Route path="attendance" element={<Attendance />} />
                   <Route path="inventory" element={<Inventory />} />
+                  <Route path="home" element={<Home />} />
                   <Route index element={<Navigate to="records" replace />} />
                 </Route>
               </Route>
