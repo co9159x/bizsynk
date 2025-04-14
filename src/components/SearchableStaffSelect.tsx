@@ -1,31 +1,43 @@
 import { useState, useEffect } from 'react';
 import { Staff } from '../types';
 import { getStaff } from '../lib/firebase/client-services';
+import { useAuth } from '../contexts/AuthContext';
 
 interface SearchableStaffSelectProps {
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
   className?: string;
+  disabled?: boolean;
 }
 
 export default function SearchableStaffSelect({
   value,
   onChange,
   required = false,
-  className = ''
+  className = '',
+  disabled = false
 }: SearchableStaffSelectProps) {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     const fetchStaff = async () => {
       const staffData = await getStaff();
       setStaff(staffData);
+
+      // If there's a current user, find their staff record
+      if (currentUser) {
+        const currentStaffMember = staffData.find(s => s.userId === currentUser.uid);
+        if (currentStaffMember) {
+          onChange(currentStaffMember.name);
+        }
+      }
     };
     fetchStaff();
-  }, []);
+  }, [currentUser, onChange]);
 
   const filteredStaff = staff.filter(member =>
     member.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -36,13 +48,13 @@ export default function SearchableStaffSelect({
   return (
     <div className="relative">
       <div
-        className={`w-full p-2 border rounded-md cursor-pointer ${className}`}
-        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full p-2 border rounded-md ${disabled ? 'bg-gray-100' : 'cursor-pointer'} ${className}`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         {selectedStaff ? selectedStaff.name : 'Select Staff'}
       </div>
       
-      {isOpen && (
+      {isOpen && !disabled && (
         <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg">
           <input
             type="text"

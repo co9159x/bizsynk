@@ -17,8 +17,8 @@ export default function Records() {
     date: today,
     staff: '',
     clientName: '',
-    service: '',
-    price: '',
+    services: [] as { name: string; price: number }[],
+    totalPrice: 0,
     paymentMethod: ''
   });
   const [loading, setLoading] = useState(false);
@@ -36,9 +36,9 @@ export default function Records() {
         // Find the current staff member based on user ID
         if (currentUser) {
           const staffMember = staffData.find(s => s.userId === currentUser.uid);
-          setCurrentStaff(staffMember || null);
           if (staffMember) {
-            setFormData(prev => ({ ...prev, staff: staffMember.id || '' }));
+            setCurrentStaff(staffMember);
+            setFormData(prev => ({ ...prev, staff: staffMember.name }));
           }
         }
 
@@ -74,19 +74,31 @@ export default function Records() {
     setError('');
 
     try {
-      const success = await addServiceRecord({
-        ...formData,
-        price: parseFloat(formData.price)
-      });
+      // Create a record for each service
+      const currentTime = new Date();
+      const promises = formData.services.map(service => 
+        addServiceRecord({
+          date: formData.date,
+          staff: formData.staff,
+          clientName: formData.clientName,
+          service: service.name,
+          price: service.price,
+          paymentMethod: formData.paymentMethod,
+          time: format(currentTime, 'hh:mm a')
+        })
+      );
+
+      const results = await Promise.all(promises);
+      const success = results.every(result => result);
 
       if (success) {
         // Reset form
         setFormData({
           date: today,
-          staff: currentStaff?.id || '',
+          staff: currentStaff?.name || '',
           clientName: '',
-          service: '',
-          price: '',
+          services: [],
+          totalPrice: 0,
           paymentMethod: ''
         });
         // Refresh records
@@ -103,7 +115,7 @@ export default function Records() {
 
   // Filter records based on current staff member
   const filteredRecords = currentStaff 
-    ? records.filter(record => record.staff === currentStaff.id)
+    ? records.filter(record => record.staff === currentStaff.name)
     : records;
 
   return (
@@ -142,7 +154,6 @@ export default function Records() {
           <div>
             <label className="block text-sm font-medium text-gray-700">Staff Member *</label>
             <SearchableStaffSelect
-              staff={staff}
               value={formData.staff}
               onChange={(value) => setFormData(prev => ({ ...prev, staff: value }))}
               required
@@ -166,24 +177,53 @@ export default function Records() {
           <div>
             <label className="block text-sm font-medium text-gray-700">Service *</label>
             <SearchableServiceSelect
-              value={formData.service}
-              onChange={(value) => setFormData(prev => ({ ...prev, service: value }))}
+              value=""
+              onChange={(value) => {
+                const service = value;
+                const price = parseFloat(prompt('Enter price for this service:') || '0');
+                if (price > 0) {
+                  setFormData(prev => ({
+                    ...prev,
+                    services: [...prev.services, { name: service, price }],
+                    totalPrice: prev.totalPrice + price
+                  }));
+                }
+              }}
               required
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Price (₦) *</label>
-            <input
-              type="number"
-              name="price"
-              value={formData.price}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
-              placeholder="Enter price"
-              required
-            />
-          </div>
+          {formData.services.length > 0 && (
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Selected Services</label>
+              <div className="space-y-2">
+                {formData.services.map((service, index) => (
+                  <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                    <span>{service.name}</span>
+                    <div className="flex items-center space-x-4">
+                      <span>{formatCurrency(service.price)}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            services: prev.services.filter((_, i) => i !== index),
+                            totalPrice: prev.totalPrice - service.price
+                          }));
+                        }}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <div className="text-right font-medium">
+                  Total: {formatCurrency(formData.totalPrice)}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Payment Method *</label>
@@ -243,7 +283,7 @@ export default function Records() {
                   {filteredRecords.map((record) => (
                     <tr key={record.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {format(new Date(record.date), 'hh:mm a')}
+                        {record.time || format(new Date(record.date), 'hh:mm a')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.staff}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.clientName}</td>

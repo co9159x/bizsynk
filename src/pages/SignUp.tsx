@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { doc, setDoc, collection } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function SignUp() {
   const [email, setEmail] = useState('');
@@ -23,7 +25,24 @@ export default function SignUp() {
     try {
       setError('');
       setLoading(true);
-      await signUp(email, password, 'staff', firstName, lastName);
+      const userCredential = await signUp(email, password, 'staff', firstName, lastName);
+      
+      // Create staff record
+      const staffDoc = doc(collection(db, 'staff'));
+      await setDoc(staffDoc, {
+        name: `${firstName} ${lastName}`,
+        firstName,
+        lastName,
+        role: 'Barber', // Default role, can be changed later
+        email,
+        phone: '',
+        status: 'out',
+        lastClockIn: null,
+        lastClockOut: null,
+        userId: userCredential.user.uid,
+        createdAt: new Date().toISOString()
+      });
+
       navigate('/');
     } catch (error) {
       setError('Failed to create an account. Please try again.');

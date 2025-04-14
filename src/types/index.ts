@@ -1,6 +1,7 @@
 export interface ServiceRecord {
   id?: string;
   date: string;
+  time: string;
   staff: string;
   clientName: string;
   service: string;
