@@ -4,12 +4,22 @@ import { useAuth } from '../contexts/AuthContext';
 import { doc, setDoc, collection } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
+const STAFF_ROLES = [
+  'Barber',
+  'Stylist',
+  'Nail Technician',
+  'Makeup Artist',
+  'Receptionist',
+  'Manager'
+] as const;
+
 export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [role, setRole] = useState<typeof STAFF_ROLES[number]>('Barber');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
@@ -33,7 +43,7 @@ export default function SignUp() {
         name: `${firstName} ${lastName}`,
         firstName,
         lastName,
-        role: 'Barber', // Default role, can be changed later
+        role,
         email,
         phone: '',
         status: 'out',
@@ -93,6 +103,25 @@ export default function SignUp() {
               />
             </div>
             <div>
+              <label htmlFor="role" className="sr-only">
+                Role
+              </label>
+              <select
+                id="role"
+                name="role"
+                required
+                value={role}
+                onChange={(e) => setRole(e.target.value as typeof STAFF_ROLES[number])}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+              >
+                {STAFF_ROLES.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label htmlFor="email-address" className="sr-only">
                 Email address
               </label>
@@ -143,8 +172,8 @@ export default function SignUp() {
           </div>
 
           {error && (
-            <div className="text-red-500 text-sm text-center">
-              {error}
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="text-sm text-red-700">{error}</div>
             </div>
           )}
 
@@ -152,7 +181,7 @@ export default function SignUp() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
             >
               {loading ? 'Creating account...' : 'Sign up'}
             </button>
