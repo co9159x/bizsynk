@@ -1,6 +1,9 @@
+import { Timestamp } from 'firebase/firestore';
+
 export interface ServiceRecord {
   id?: string;
   date: string;
+  time?: string;
   staff: string;
   clientName: string;
   services: { name: string; price: number }[];
@@ -26,13 +29,15 @@ export interface Staff {
 }
 
 export interface InventoryItem {
-  id?: string;
+  id: string;
   name: string;
   quantity: number;
-  lastUsed: string | null;
-  category: string;
-  minimumQuantity: number;
-  createdAt?: string;
+  unit?: string;
+  category?: string;
+  minimumQuantity?: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  updatedBy: string;
 }
 
 export interface AttendanceRecord {

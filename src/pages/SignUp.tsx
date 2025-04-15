@@ -13,6 +13,15 @@ const STAFF_ROLES = [
   'Manager'
 ] as const;
 
+// Helper function to capitalize first letter of each word
+const capitalizeWords = (str: string): string => {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,16 +44,22 @@ export default function SignUp() {
     try {
       setError('');
       setLoading(true);
-      const userCredential = await signUp(email, password, 'staff', firstName, lastName);
+
+      // Format first and last names
+      const formattedFirstName = capitalizeWords(firstName.trim());
+      const formattedLastName = capitalizeWords(lastName.trim());
+      const fullName = `${formattedFirstName} ${formattedLastName}`;
+
+      const userCredential = await signUp(email, password, 'staff', formattedFirstName, formattedLastName);
       
       // Create staff record
       const staffDoc = doc(collection(db, 'staff'));
       await setDoc(staffDoc, {
-        name: `${firstName} ${lastName}`,
-        firstName,
-        lastName,
+        name: fullName,
+        firstName: formattedFirstName,
+        lastName: formattedLastName,
         role,
-        email,
+        email: email.toLowerCase().trim(),
         phone: '',
         status: 'out',
         lastClockIn: null,
@@ -60,6 +75,13 @@ export default function SignUp() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to format name input
+  const handleNameInput = (value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
+    // Remove any non-letter characters except spaces and hyphens
+    const sanitized = value.replace(/[^a-zA-Z\s-]/g, '');
+    setter(sanitized);
   };
 
   return (
@@ -82,7 +104,7 @@ export default function SignUp() {
                 type="text"
                 required
                 value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                onChange={(e) => handleNameInput(e.target.value, setFirstName)}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                 placeholder="First Name"
               />
@@ -97,7 +119,7 @@ export default function SignUp() {
                 type="text"
                 required
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                onChange={(e) => handleNameInput(e.target.value, setLastName)}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                 placeholder="Last Name"
               />
@@ -172,9 +194,7 @@ export default function SignUp() {
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
-            </div>
+            <div className="text-red-600 text-sm text-center">{error}</div>
           )}
 
           <div>
@@ -186,7 +206,7 @@ export default function SignUp() {
               {loading ? 'Creating account...' : 'Sign up'}
             </button>
           </div>
-          
+
           <div className="text-sm text-center">
             <Link to="/login" className="font-medium text-purple-600 hover:text-purple-500">
               Already have an account? Sign in

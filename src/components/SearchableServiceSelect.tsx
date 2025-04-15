@@ -22,7 +22,7 @@ interface SearchableServiceSelectProps {
 export default function SearchableServiceSelect({
   value,
   onChange,
-  required = false,
+  // required = false,
   className = ''
 }: SearchableServiceSelectProps) {
   const [services, setServices] = useState<ServiceCategory[]>([]);
@@ -34,7 +34,7 @@ export default function SearchableServiceSelect({
   useEffect(() => {
     const fetchServices = async () => {
       const servicesData = await getServices();
-      setServices(servicesData);
+      setServices(servicesData as ServiceCategory[]);
     };
     fetchServices();
   }, []);

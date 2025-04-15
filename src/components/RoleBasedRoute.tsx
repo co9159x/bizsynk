@@ -36,7 +36,7 @@ export default function RoleBasedRoute({ allowedRoles }: RoleBasedRouteProps) {
   if (!allowedRoles.includes(userRole)) {
     // Redirect to the appropriate home page based on the user's role
     if (userRole === 'admin') {
-      return <Navigate to="/admin/dashboard" />;
+      return <Navigate to="/admin/home" />;
     }
     return <Navigate to="/staff/home" />;
   }

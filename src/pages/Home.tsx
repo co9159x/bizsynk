@@ -3,7 +3,7 @@ import { Calendar, Users, Package, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const staffFeatures = [
   {
@@ -41,8 +41,18 @@ const adminFeatures = [
   }
 ];
 
+// Helper function to capitalize first letter of each word
+const capitalizeWords = (str: string): string => {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 export default function Home() {
   const { currentUser, userRole } = useAuth();
+  const [firstName, setFirstName] = useState<string>('');
 
   useEffect(() => {
     async function fetchUserData() {
@@ -50,9 +60,7 @@ export default function Home() {
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          // Assuming you want to set the first name
-          // You might want to handle this differently based on your data structure
-          // For example, you might want to use a state to handle this
+          setFirstName(capitalizeWords(userData.firstName));
         }
       }
     }
@@ -65,7 +73,10 @@ export default function Home() {
     <div className="py-12">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Welcome to SalonSync
+          {userRole === 'admin' 
+            ? 'Welcome Admin to SalonSync'
+            : `Welcome ${firstName} to SalonSync`
+          }
         </h1>
         <p className="text-lg text-gray-600">
           Manage your salon efficiently with our comprehensive management system

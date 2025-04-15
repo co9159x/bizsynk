@@ -19,7 +19,7 @@ export default function AdminLogin() {
       await signIn(email, password);
       // The AuthContext will handle setting the user role
       // If the user is not an admin, they will be redirected by RoleBasedRoute
-      navigate('/admin/dashboard');
+      navigate('/admin/home');
     } catch (error: any) {
       if (error.code === 'auth/invalid-credential') {
         setError('Invalid email or password');

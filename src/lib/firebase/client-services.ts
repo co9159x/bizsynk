@@ -1,5 +1,5 @@
 import { db } from './config';
-import { ServiceRecord, Staff, InventoryItem } from '../../types/index.js';
+import { ServiceRecord, Staff, InventoryItem, Service } from '../../types/index.js';
 import { 
   collection, 
   getDocs, 
@@ -126,10 +126,31 @@ export const getInventory = async () => {
     const inventoryRef = collection(db, 'inventory');
     const snapshot = await getDocs(inventoryRef);
     
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as InventoryItem[];
+    // Process the data to ensure proper types and prevent duplicates
+    const items = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        quantity: parseInt(String(data.quantity)) || 0
+      };
+    }) as InventoryItem[];
+    
+    // Group by name (case-insensitive) and sum quantities
+    const groupedItems = items.reduce((acc, item) => {
+      const key = item.name.toLowerCase().trim();
+      if (!acc[key]) {
+        acc[key] = {
+          ...item,
+          quantity: 0
+        };
+      }
+      acc[key].quantity += parseInt(String(item.quantity)) || 0;
+      return acc;
+    }, {} as Record<string, InventoryItem>);
+    
+    // Convert back to array
+    return Object.values(groupedItems);
   } catch (error) {
     console.error('Error getting inventory:', error);
     return [];
@@ -141,7 +162,8 @@ export const addInventoryItem = async (item: Omit<InventoryItem, 'id'>) => {
     const inventoryRef = collection(db, 'inventory');
     await addDoc(inventoryRef, {
       ...item,
-      createdAt: item.createdAt || new Date().toISOString()
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now()
     });
     return true;
   } catch (error) {
@@ -153,10 +175,15 @@ export const addInventoryItem = async (item: Omit<InventoryItem, 'id'>) => {
 export const updateInventoryItem = async (id: string, updates: Partial<InventoryItem>) => {
   try {
     const itemRef = doc(db, 'inventory', id);
-    await updateDoc(itemRef, {
+    
+    // Ensure quantity is a number
+    const processedUpdates = {
       ...updates,
-      lastUsed: updates.lastUsed || new Date().toISOString()
-    });
+      quantity: updates.quantity !== undefined ? parseInt(String(updates.quantity)) || 0 : undefined,
+      updatedAt: Timestamp.now()
+    };
+    
+    await updateDoc(itemRef, processedUpdates);
     return true;
   } catch (error) {
     console.error('Error updating inventory item:', error);
@@ -164,36 +191,37 @@ export const updateInventoryItem = async (id: string, updates: Partial<Inventory
   }
 };
 
-export const getServices = async () => {
+interface ServiceCategory {
+  category: string;
+  services: Service[];
+}
+
+export const getServices = async (): Promise<ServiceCategory[]> => {
   try {
     const servicesRef = collection(db, 'services');
     const snapshot = await getDocs(servicesRef);
-    
-    const services = snapshot.docs.map(doc => ({
+    const servicesData = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })) as Service[];
 
     // Group services by category
-    const groupedServices = services.reduce((acc, service) => {
-      const category = service.category || 'Other';
+    const servicesByCategory = servicesData.reduce((acc, service) => {
+      const category = service.category || 'Uncategorized';
       if (!acc[category]) {
         acc[category] = [];
       }
-      acc[category].push({
-        name: service.name,
-        price: service.price
-      });
+      acc[category].push(service);
       return acc;
-    }, {} as Record<string, { name: string; price: number }[]>);
+    }, {} as Record<string, Service[]>);
 
-    // Convert to the format expected by the UI
-    return Object.entries(groupedServices).map(([category, services]) => ({
+    // Convert to array format
+    return Object.entries(servicesByCategory).map(([category, services]) => ({
       category,
       services
     }));
   } catch (error) {
-    console.error('Error getting services:', error);
-    return [];
+    console.error('Error fetching services:', error);
+    throw error;
   }
 }; 

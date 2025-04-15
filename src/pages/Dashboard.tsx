@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BarChart3, Users, DollarSign } from 'lucide-react';
 import type { ServiceRecord, Staff, AttendanceRecord } from '../types';
-import { formatCurrency, formatDate, formatTime } from '../utils/format';
+import { formatCurrency, formatDate } from '../utils/format';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Line } from 'react-chartjs-2';
@@ -93,7 +93,7 @@ export default function Dashboard() {
           });
           return {
             label: formatDate(date),
-            revenue: dayRecords.reduce((sum, record) => sum + record.price, 0)
+            revenue: dayRecords.reduce((sum, record) => sum + record.totalPrice, 0)
           };
         });
 
@@ -112,7 +112,7 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
-  const totalRevenue = serviceRecords.reduce((sum, record) => sum + record.price, 0);
+  const totalRevenue = serviceRecords.reduce((sum, record) => sum + record.totalPrice, 0);
   const staffPresent = attendanceRecords.filter(record => record.status === 'present').length;
 
   // Filter staff based on search query
@@ -251,7 +251,7 @@ export default function Dashboard() {
                   (record) => record.staff === member.name
                 );
                 const staffRevenue = staffRecords.reduce(
-                  (sum, record) => sum + record.price,
+                  (sum, record) => sum + record.totalPrice,
                   0
                 );
                 const uniqueClients = new Set(
@@ -270,7 +270,7 @@ export default function Dashboard() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{staffRecords.length}</div>
                       <div className="text-xs text-gray-500">
-                        {staffRecords.map(s => s.service).join(', ')}
+                        {staffRecords.map(s => s.services.map(service => service.name)).join(', ')}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -291,7 +291,7 @@ export default function Dashboard() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {attendance?.timeIn ? formatTime(attendance.timeIn) : '-'}
+                      {attendance?.timeIn ? new Date(attendance.timeIn).toLocaleTimeString() : '-'}
                     </td>
                   </tr>
                 );

@@ -234,7 +234,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 export default function Attendance() {
-  const [staff, setStaff] = useState<Staff[]>([]);
+  const [staff, /* setStaff */] = useState<Staff[]>([]);
   const [showClockInModal, setShowClockInModal] = useState(false);
   const [showClockOutModal, setShowClockOutModal] = useState(false);
 

@@ -4,9 +4,15 @@ import { PAYMENT_METHODS } from '../constants';
 import { type ServiceRecord, Staff } from '../types';
 import { formatCurrency } from '../utils/format';
 import { addServiceRecord, getServiceRecords, getStaff } from '../lib/firebase/client-services';
-import SearchableStaffSelect from '../components/SearchableStaffSelect';
 import SearchableServiceSelect from '../components/SearchableServiceSelect';
 import { useAuth } from '../contexts/AuthContext';
+
+// Helper function to capitalize first letter of each word
+const capitalizeWords = (str: string) => {
+  return str.split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
 
 export default function Records() {
   const { currentUser } = useAuth();
@@ -14,16 +20,17 @@ export default function Records() {
   const today = format(new Date(), 'yyyy-MM-dd');
   const [selectedDate, setSelectedDate] = useState(today);
   const [formData, setFormData] = useState({
-    date: today,
-    staff: '',
     clientName: '',
+    clientPhone: '',
+    date: today,
     services: [] as { name: string; price: number }[],
     totalPrice: 0,
-    paymentMethod: ''
+    paymentMethod: '',
+    staff: ''
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [staff, setStaff] = useState<Staff[]>([]);
+  // const [error, setError] = useState('');
+  // const [staff, setStaff] = useState<Staff[]>([]);
   const [currentStaff, setCurrentStaff] = useState<Staff | null>(null);
 
   useEffect(() => {
@@ -31,14 +38,16 @@ export default function Records() {
       try {
         setLoading(true);
         const staffData = await getStaff();
-        setStaff(staffData);
+        // setStaff(staffData);
 
         // Find the current staff member based on user ID
         if (currentUser) {
           const staffMember = staffData.find(s => s.userId === currentUser.uid);
           if (staffMember) {
             setCurrentStaff(staffMember);
-            setFormData(prev => ({ ...prev, staff: staffMember.name }));
+            // Format the staff name properly
+            const formattedName = capitalizeWords(`${staffMember.firstName} ${staffMember.lastName}`);
+            setFormData(prev => ({ ...prev, staff: formattedName }));
           }
         }
 
@@ -47,7 +56,7 @@ export default function Records() {
         setRecords(dateRecords);
       } catch (error) {
         console.error('Error fetching data:', error);
-        setError('Failed to load data. Please try again.');
+        // setError('Failed to load data. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -71,20 +80,27 @@ export default function Records() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
 
     try {
-      // Create a record for each service
-      const currentTime = new Date();
+      // Format the staff name properly
+      const staffName = currentStaff 
+        ? `${capitalizeWords(currentStaff.firstName)} ${capitalizeWords(currentStaff.lastName)}`
+        : '';
+
+      // Get current date and time
+      const now = new Date();
+      const currentDate = format(now, 'yyyy-MM-dd');
+      const currentTime = format(now, 'HH:mm:ss');
+
       const promises = formData.services.map(service => 
         addServiceRecord({
-          date: formData.date,
-          staff: formData.staff,
+          date: currentDate,
+          time: currentTime,
+          staff: staffName,
           clientName: formData.clientName,
-          service: service.name,
-          price: service.price,
+          services: [{ name: service.name, price: service.price }],
+          totalPrice: service.price,
           paymentMethod: formData.paymentMethod,
-          time: format(currentTime, 'hh:mm a')
         })
       );
 
@@ -92,22 +108,20 @@ export default function Records() {
       const success = results.every(result => result);
 
       if (success) {
-        // Reset form
         setFormData({
-          date: today,
-          staff: currentStaff?.name || '',
           clientName: '',
+          clientPhone: '',
+          date: today,
           services: [],
           totalPrice: 0,
-          paymentMethod: ''
+          paymentMethod: '',
+          staff: ''
         });
-        // Refresh records
         const dateRecords = await getServiceRecords(selectedDate);
         setRecords(dateRecords);
       }
     } catch (error) {
       console.error('Error adding record:', error);
-      setError('Failed to add record. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -115,7 +129,10 @@ export default function Records() {
 
   // Filter records based on current staff member
   const filteredRecords = currentStaff 
-    ? records.filter(record => record.staff === currentStaff.name)
+    ? records.filter(record => {
+        const staffName = `${capitalizeWords(currentStaff.firstName)} ${capitalizeWords(currentStaff.lastName)}`;
+        return record.staff === staffName;
+      })
     : records;
 
   return (
@@ -153,11 +170,11 @@ export default function Records() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Staff Member *</label>
-            <SearchableStaffSelect
-              value={formData.staff}
-              onChange={(value) => setFormData(prev => ({ ...prev, staff: value }))}
-              required
-              disabled={!!currentStaff}
+            <input
+              type="text"
+              value={currentStaff ? `${currentStaff.firstName} ${currentStaff.lastName}` : ''}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 bg-gray-50"
+              disabled
             />
           </div>
 
@@ -280,15 +297,19 @@ export default function Records() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredRecords.map((record) => (
+                  {records.map((record) => (
                     <tr key={record.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {record.time || format(new Date(record.date), 'hh:mm a')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.staff}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.clientName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.service}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(record.price)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {record.services.map(s => s.name).join(', ')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatCurrency(record.totalPrice)}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">{record.paymentMethod}</td>
                     </tr>
                   ))}

@@ -1,8 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Package } from 'lucide-react';
 import type { InventoryItem } from '../types';
 import { getInventory, addInventoryItem, updateInventoryItem } from '../lib/firebase/client-services';
 import { useAuth } from '../contexts/AuthContext';
+import { Timestamp } from 'firebase/firestore';
+
+// Helper function to format dates
+const formatDate = (date: Timestamp | string | null | undefined) => {
+  if (!date) return 'N/A';
+  if (date instanceof Timestamp) {
+    return date.toDate().toLocaleString();
+  }
+  if (typeof date === 'string') {
+    return new Date(date).toLocaleString();
+  }
+  return 'N/A';
+};
 
 export default function Inventory() {
   const { userRole } = useAuth();
@@ -10,12 +22,13 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
-    quantity: ''
+    quantity: 0
   });
   const [useItemData, setUseItemData] = useState({
     itemId: '',
-    quantity: ''
+    quantity: 0
   });
+  // const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
   useEffect(() => {
     loadInventory();
@@ -36,7 +49,7 @@ export default function Inventory() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === 'quantity' ? parseInt(value) || 0 : value
     }));
   };
 
@@ -50,61 +63,116 @@ export default function Inventory() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    try {
-      const success = await addInventoryItem({
-        name: formData.name,
-        quantity: parseInt(formData.quantity, 10),
-        createdAt: new Date().toISOString()
-      });
+    setLoading(true);
 
-      if (success) {
-        // Reset form
-        setFormData({
-          name: '',
-          quantity: ''
+    try {
+      // Check if item already exists - use exact match for name
+      const existingItem = inventory.find(item => 
+        item.name.toLowerCase().trim() === formData.name.toLowerCase().trim()
+      );
+
+      if (existingItem) {
+        // Update existing item quantity
+        const currentQuantity = parseInt(String(existingItem.quantity)) || 0;
+        const addedQuantity = parseInt(String(formData.quantity)) || 0;
+        const updatedQuantity = currentQuantity + addedQuantity;
+        
+        console.log(`Updating ${existingItem.name}: ${currentQuantity} + ${addedQuantity} = ${updatedQuantity}`);
+        
+        const success = await updateInventoryItem(existingItem.id, {
+          quantity: updatedQuantity,
+          updatedAt: Timestamp.now(),
+          updatedBy: userRole === 'staff' ? 'Staff' : 'Admin'
         });
-        // Reload inventory
-        await loadInventory();
+
+        if (success) {
+          setFormData({
+            name: '',
+            quantity: 0
+          });
+          const inventoryData = await getInventory();
+          setInventory(inventoryData);
+        }
+      } else {
+        // Create new item
+        const newItem: Omit<InventoryItem, 'id'> = {
+          name: formData.name.trim(),
+          quantity: parseInt(String(formData.quantity)) || 0,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+          updatedBy: userRole === 'staff' ? 'Staff' : 'Admin'
+        };
+
+        const success = await addInventoryItem(newItem);
+
+        if (success) {
+          setFormData({
+            name: '',
+            quantity: 0
+          });
+          const inventoryData = await getInventory();
+          setInventory(inventoryData);
+        }
       }
     } catch (error) {
-      console.error('Error adding item:', error);
+      console.error('Error creating/updating inventory item:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUseItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setLoading(true);
+
     try {
       const item = inventory.find(i => i.id === useItemData.itemId);
-      if (!item) return;
-
-      const quantityToUse = parseInt(useItemData.quantity, 10);
-      if (quantityToUse > item.quantity) {
-        alert('Cannot use more items than available in inventory');
-        return;
+      if (!item) {
+        throw new Error('Item not found');
       }
 
-      const currentDate = new Date();
-      const success = await updateInventoryItem(useItemData.itemId, {
-        quantity: item.quantity - quantityToUse,
-        lastUsed: currentDate.toISOString(),
-        lastUsedBy: userRole === 'staff' ? 'Staff' : 'Admin'
+      const updatedQuantity = item.quantity - useItemData.quantity;
+      if (updatedQuantity < 0) {
+        throw new Error('Insufficient quantity');
+      }
+
+      const success = await updateInventoryItem(item.id, {
+        quantity: updatedQuantity,
+        updatedAt: Timestamp.now(),
+        updatedBy: userRole === 'staff' ? 'Staff' : 'Admin'
       });
 
       if (success) {
-        // Reset form
         setUseItemData({
           itemId: '',
-          quantity: ''
+          quantity: 0
         });
-        // Reload inventory
-        await loadInventory();
+        const inventoryData = await getInventory();
+        setInventory(inventoryData);
       }
     } catch (error) {
-      console.error('Error using item:', error);
+      console.error('Error using inventory item:', error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  // const handleUpdateItem = async (itemId: string, updatedData: Partial<InventoryItem>) => {
+  //   setLoading(true);
+
+  //   try {
+  //     const success = await updateInventoryItem(itemId, updatedData);
+
+  //     if (success) {
+  //       const inventoryData = await getInventory();
+  //       setInventory(inventoryData);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error updating inventory item:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <div className="space-y-6">
@@ -214,9 +282,8 @@ export default function Inventory() {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Added</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Used</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Used</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -224,23 +291,13 @@ export default function Inventory() {
                     <tr key={item.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {item.quantity === 0 ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            Out of Stock
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            <Package className="w-4 h-4 mr-1" />
-                            In Stock
-                          </span>
-                        )}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDate(item.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.createdAt ? new Date(item.createdAt).toLocaleString() : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.lastUsed ? new Date(item.lastUsed).toLocaleString() : 'Never'}
+                        {item.updatedAt && item.updatedBy === 'Staff' 
+                          ? formatDate(item.updatedAt) 
+                          : 'Never'}
                       </td>
                     </tr>
                   ))}
