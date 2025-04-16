@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Package, LayoutDashboard } from 'lucide-react';
+import { Calendar, Users, Package, LayoutDashboard, MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -39,6 +39,12 @@ const adminFeatures = [
     title: 'Inventory Management',
     description: 'Track products and get low stock alerts',
     link: '/admin/inventory'
+  },
+  {
+    icon: MapPin,
+    title: 'Location Management',
+    description: 'Manage salon locations and attendance zones',
+    link: '/admin/locations'
   }
 ];
 
