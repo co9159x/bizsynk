@@ -2,15 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Staff } from '../types';
-
-// Helper function to capitalize first letter of each word
-const capitalizeWords = (str: string): string => {
-  return str
-    .toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
+import { capitalizeWords } from '../utils/format';
 
 interface SearchableStaffSelectProps {
   onChange: (value: string) => void;

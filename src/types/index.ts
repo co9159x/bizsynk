@@ -40,6 +40,17 @@ export interface InventoryItem {
   updatedBy: string;
 }
 
+export interface Location {
+  id?: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  maxDistance: number; // in meters
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface AttendanceRecord {
   id?: string;
   staffId: string;
@@ -48,6 +59,8 @@ export interface AttendanceRecord {
   timeIn: string | null;
   timeOut: string | null;
   status: 'present' | 'late' | 'absent';
+  locationId?: string; // Reference to the location used for clock-in
+  locationName?: string; // Name of the location for easy reference
   createdAt?: string;
 }
 

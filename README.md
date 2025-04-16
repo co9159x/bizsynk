@@ -1,105 +1,110 @@
 # SalonSync
 
-SalonSync is a modern web application designed to streamline salon management operations. It provides a comprehensive solution for managing staff, services, inventory, and client records.
+SalonSync is a comprehensive salon management system designed to streamline operations for both staff and administrators.
 
 ## Features
 
-### Staff Management
-- Staff registration and authentication
-- Role-based access control (Admin/Staff)
-- Staff attendance tracking
-- Performance metrics and analytics
+### Staff Features
+- **Service Records Management**
+  - Create and manage service records
+  - Track client information
+  - Record multiple services per client
+  - Automatic staff name assignment
+  - Payment method tracking
 
-### Service Management
-- Service catalog with pricing
-- Service record tracking
-- Revenue analytics
-- Client service history
+- **Attendance Tracking**
+  - Clock in/out functionality
+  - View attendance history
+  - Track working hours
 
-### Inventory Management
-- Real-time inventory tracking
-- Low stock alerts
-- Usage tracking
-- Category-based organization
+- **Inventory Management**
+  - View available inventory items
+  - Track item usage
+  - Monitor stock levels
+  - Record item consumption
 
-### Client Management
-- Client profiles
-- Service history
-- Appointment tracking
-- Notes and preferences
+### Admin Features
+- **Dashboard**
+  - Real-time revenue tracking
+  - Staff performance metrics
+  - Service popularity analytics
+  - Inventory status overview
 
-### Dashboard
-- Real-time revenue tracking
-- Staff performance metrics
-- Attendance monitoring
-- Service analytics
-- Interactive charts and graphs
+- **Staff Management**
+  - Add new staff members
+  - Manage staff roles and permissions
+  - View staff attendance records
+  - Monitor staff performance
 
-## Technology Stack
+- **Service Management**
+  - Add/edit service categories
+  - Set service prices
+  - Manage service durations
+  - Track service popularity
 
-- **Frontend**: React with TypeScript
-- **Styling**: Tailwind CSS
-- **Authentication**: Firebase Authentication
-- **Database**: Firebase Firestore
-- **Charts**: Chart.js
-- **Date Handling**: date-fns
-- **Form Handling**: React Hook Form
-- **UI Components**: Headless UI
+- **Inventory Control**
+  - Add new inventory items
+  - Set minimum stock levels
+  - Track inventory usage
+  - Manage stock alerts
+
+- **Client Management**
+  - View client history
+  - Track client preferences
+  - Manage client records
+  - View service history
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js (v14 or higher)
-- npm or yarn
-- Firebase account
+- npm (v6 or higher)
 
 ### Installation
-
 1. Clone the repository
 ```bash
-git clone https://github.com/co9159x/salonsync.git
-cd salonsync
+git clone https://github.com/yourusername/salonsync.git
 ```
 
 2. Install dependencies
 ```bash
+cd salonsync
 npm install
 ```
 
-3. Set up Firebase
-- Create a new Firebase project
-- Enable Authentication and Firestore
-- Add your Firebase configuration to `src/lib/firebase/config.ts`
+3. Set up environment variables
+Create a `.env` file in the root directory with your Firebase configuration:
+```
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+```
 
 4. Start the development server
 ```bash
 npm run dev
 ```
 
-## Project Structure
+## Usage
 
-```
-salonsync/
-├── src/
-│   ├── components/     # Reusable UI components
-│   ├── lib/           # Firebase configuration and services
-│   ├── pages/         # Application pages
-│   ├── types/         # TypeScript type definitions
-│   └── utils/         # Utility functions
-├── public/            # Static assets
-└── firebase/          # Firebase configuration files
-```
+### Staff Login
+1. Navigate to `/staff/login`
+2. Enter your credentials
+3. Access your dashboard with service records and attendance tracking
+
+### Admin Login
+1. Navigate to `/admin/login`
+2. Enter admin credentials
+3. Access the admin dashboard with full system management capabilities
 
 ## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
-
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Contact

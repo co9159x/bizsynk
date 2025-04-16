@@ -22,12 +22,14 @@ async function checkCollections() {
     
     // List of collections to check
     const collections = [
-      'staff',
-      'services',
+      'attendance',
+      'clients',
       'inventory',
       'records',
-      'attendance',
-      'clients'
+      'serviceRecords',
+      'services',
+      'staff',
+      'users'
     ];
 
     for (const collectionName of collections) {

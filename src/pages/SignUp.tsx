@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, setDoc, collection } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { capitalizeWords } from '../utils/format';
 
 const STAFF_ROLES = [
   'Barber',
@@ -12,15 +13,6 @@ const STAFF_ROLES = [
   'Receptionist',
   'Manager'
 ] as const;
-
-// Helper function to capitalize first letter of each word
-const capitalizeWords = (str: string): string => {
-  return str
-    .toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
 
 export default function SignUp() {
   const [email, setEmail] = useState('');

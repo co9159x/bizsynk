@@ -2,17 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { PAYMENT_METHODS } from '../constants';
 import { type ServiceRecord, Staff } from '../types';
-import { formatCurrency } from '../utils/format';
+import { formatCurrency, capitalizeWords } from '../utils/format';
 import { addServiceRecord, getServiceRecords, getStaff } from '../lib/firebase/client-services';
 import SearchableServiceSelect from '../components/SearchableServiceSelect';
 import { useAuth } from '../contexts/AuthContext';
-
-// Helper function to capitalize first letter of each word
-const capitalizeWords = (str: string) => {
-  return str.split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-};
 
 export default function Records() {
   const { currentUser } = useAuth();
@@ -46,7 +39,7 @@ export default function Records() {
           if (staffMember) {
             setCurrentStaff(staffMember);
             // Format the staff name properly
-            const formattedName = capitalizeWords(`${staffMember.firstName} ${staffMember.lastName}`);
+            const formattedName = `${capitalizeWords(staffMember.firstName)} ${capitalizeWords(staffMember.lastName)}`;
             setFormData(prev => ({ ...prev, staff: formattedName }));
           }
         }
@@ -97,7 +90,7 @@ export default function Records() {
           date: currentDate,
           time: currentTime,
           staff: staffName,
-          clientName: formData.clientName,
+          clientName: capitalizeWords(formData.clientName),
           services: [{ name: service.name, price: service.price }],
           totalPrice: service.price,
           paymentMethod: formData.paymentMethod,
@@ -115,7 +108,7 @@ export default function Records() {
           services: [],
           totalPrice: 0,
           paymentMethod: '',
-          staff: ''
+          staff: staffName
         });
         const dateRecords = await getServiceRecords(selectedDate);
         setRecords(dateRecords);
@@ -172,7 +165,7 @@ export default function Records() {
             <label className="block text-sm font-medium text-gray-700">Staff Member *</label>
             <input
               type="text"
-              value={currentStaff ? `${currentStaff.firstName} ${currentStaff.lastName}` : ''}
+              value={formData.staff}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 bg-gray-50"
               disabled
             />
@@ -277,7 +270,7 @@ export default function Records() {
         <div className="p-6">
           <h2 className="text-xl font-semibold mb-4">
             Records for {format(new Date(selectedDate), 'MMMM d, yyyy')}
-            {currentStaff && ` - ${currentStaff.name}`}
+            {currentStaff && ` - ${formData.staff}`}
           </h2>
           {loading ? (
             <p className="text-gray-500 text-center py-4">Loading records...</p>

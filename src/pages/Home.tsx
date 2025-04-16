@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useEffect, useState } from 'react';
+import { capitalizeWords } from '../utils/format';
 
 const staffFeatures = [
   {
@@ -40,15 +41,6 @@ const adminFeatures = [
     link: '/admin/inventory'
   }
 ];
-
-// Helper function to capitalize first letter of each word
-const capitalizeWords = (str: string): string => {
-  return str
-    .toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
 
 export default function Home() {
   const { currentUser, userRole } = useAuth();

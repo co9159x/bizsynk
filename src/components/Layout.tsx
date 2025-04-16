@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Scissors, Calendar, Users, Package, LayoutDashboard, LogOut, Home } from 'lucide-react';
+import { Scissors, Calendar, Users, Package, LayoutDashboard, LogOut, Home, MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 // Define navigation items for different roles
@@ -14,6 +14,7 @@ const adminNavItems = [
   { to: '/admin/home', label: 'Home', icon: Home },
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin/inventory', label: 'Inventory', icon: Package },
+  { to: '/admin/locations', label: 'Locations', icon: MapPin },
 ];
 
 export default function Layout() {
@@ -34,15 +35,21 @@ export default function Layout() {
     }
   };
 
+  // Get the home path based on user role
+  const homePath = userRole === 'admin' ? '/admin/home' : '/staff/home';
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-purple-600 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <div className="flex-shrink-0 flex items-center">
+            <Link 
+              to={homePath}
+              className="flex-shrink-0 flex items-center hover:bg-purple-500 px-3 py-2 rounded-md"
+            >
               <Scissors className="h-8 w-8" />
               <span className="ml-2 text-xl font-bold">SalonSync</span>
-            </div>
+            </Link>
             <div className="hidden md:flex items-center space-x-4">
               {navItems.map(({ to, label, icon: Icon }) => (
                 <Link
