@@ -9,12 +9,13 @@ export default function DatabaseInitializer() {
   const { currentUser } = useAuth();
 
   useEffect(() => {
+    // If there's no user, we're on a public route, so skip initialization
+    if (!currentUser) {
+      setIsInitialized(true);
+      return;
+    }
+    
     async function checkAndInitializeDatabase() {
-      if (!currentUser) {
-        setStatus('Waiting for authentication...');
-        return;
-      }
-
       try {
         setStatus('Checking if database is initialized...');
         // Check if database is already initialized
@@ -68,7 +69,8 @@ export default function DatabaseInitializer() {
     );
   }
 
-  if (!isInitialized) {
+  // Don't show loading screen if there's no user (public routes)
+  if (!isInitialized && currentUser) {
     return (
       <div className="fixed inset-0 bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
