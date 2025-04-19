@@ -15,6 +15,9 @@
     "initialize-db": "ts-node --esm src/scripts/initializeDatabase.ts"
   },
   "dependencies": {
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/cli": "^7.2.0",
+    "@capacitor/core": "^7.2.0",
     "@types/node": "^20.11.24",
     "chart.js": "^4.4.8",
     "date-fns": "^4.1.0",
@@ -27,7 +30,8 @@
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.5.2",
-    "react-router-dom": "^6.22.2"
+    "react-router-dom": "^6.22.2",
+    "sharp": "^0.34.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",
