@@ -12,8 +12,8 @@ dotenv.config({ path: join(__dirname, '..', '.env') });
 // Initialize Firebase Admin
 const app = initializeApp({
   credential: cert({
-    projectId: "salonsync-7737e",
-    clientEmail: "firebase-adminsdk-fbsvc@salonsync-7737e.iam.gserviceaccount.com",
+    projectId: "bizsynk-7737e",
+    clientEmail: "firebase-adminsdk-fbsvc@bizsynk-7737e.iam.gserviceaccount.com",
     privateKey: process.env.VITE_FIREBASE_PRIVATE_KEY
   })
 });

@@ -48,7 +48,7 @@ export default function Layout() {
               className="flex-shrink-0 flex items-center hover:bg-purple-500 px-3 py-2 rounded-md"
             >
               <Scissors className="h-8 w-8" />
-              <span className="ml-2 text-xl font-bold">SalonSync</span>
+              <span className="ml-2 text-xl font-bold">BizSynk</span>
             </Link>
             <div className="hidden md:flex items-center space-x-4">
               {navItems.map(({ to, label, icon: Icon }) => (

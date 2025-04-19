@@ -5,8 +5,8 @@ require('dotenv').config();
 // Initialize Firebase Admin
 const app = initializeApp({
   credential: cert({
-    projectId: "salonsync-7737e",
-    clientEmail: "firebase-adminsdk-fbsvc@salonsync-7737e.iam.gserviceaccount.com",
+    projectId: "bizsynk-7737e",
+    clientEmail: "firebase-adminsdk-fbsvc@bizsynk-7737e.iam.gserviceaccount.com",
     privateKey: process.env.VITE_FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
   })
 });
@@ -80,7 +80,7 @@ async function addStaff() {
       batch.set(docRef, {
         name,
         role: "Barber",
-        email: name.toLowerCase().replace(/\s+/g, '.') + "@salonsync.com",
+        email: name.toLowerCase().replace(/\s+/g, '.') + "@bizsynk.com",
         phone: `+234 123 456 ${7890 + index}`,
         status: "out",
         lastClockIn: null,
@@ -95,7 +95,7 @@ async function addStaff() {
       batch.set(docRef, {
         name,
         role: "Stylist",
-        email: name.toLowerCase().replace(/\s+/g, '.') + "@salonsync.com",
+        email: name.toLowerCase().replace(/\s+/g, '.') + "@bizsynk.com",
         phone: `+234 123 456 ${7919 + index}`,
         status: "out",
         lastClockIn: null,

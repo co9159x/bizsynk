@@ -72,8 +72,8 @@ export default function Home() {
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
           {userRole === 'admin' 
-            ? 'Welcome Admin to SalonSync'
-            : `Welcome ${firstName} to SalonSync`
+            ? 'Welcome Admin to BizSynk'
+            : `Welcome ${firstName} to BizSynk`
           }
         </h1>
         <p className="text-lg text-gray-600">

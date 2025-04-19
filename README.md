@@ -1,6 +1,6 @@
-# SalonSync
+# BizSynk
 
-SalonSync is a comprehensive salon management system designed to streamline operations for both staff and administrators.
+BizSynk is a comprehensive salon management system designed to streamline operations for both staff and administrators.
 
 ## Features
 
@@ -63,12 +63,12 @@ SalonSync is a comprehensive salon management system designed to streamline oper
 ### Installation
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/salonsync.git
+git clone https://github.com/yourusername/bizsynk.git
 ```
 
 2. Install dependencies
 ```bash
-cd salonsync
+cd bizsynk
 npm install
 ```
 
@@ -111,4 +111,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 Your Name - [@your_twitter](https://twitter.com/your_twitter)
 
-Project Link: [https://github.com/co9159x/salonsync](https://github.com/co9159x/salonsync) 
+Project Link: [https://github.com/co9159x/bizsynk](https://github.com/co9159x/bizsynk) 

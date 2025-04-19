@@ -26,7 +26,7 @@ export default function Landing() {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Scissors className="h-8 w-8 text-purple-600" />
-              <span className="ml-2 text-xl font-bold text-gray-900">SalonSync</span>
+              <span className="ml-2 text-xl font-bold text-gray-900">BizSynk</span>
             </div>
             <div className="flex items-center space-x-4">
               <a href="#features" className="text-gray-600 hover:text-purple-600 transition-colors">Features</a>
@@ -52,7 +52,7 @@ export default function Landing() {
             className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl"
           >
             <span className="block">Transform Your Salon</span>
-            <span className="block text-purple-600">with SalonSync</span>
+            <span className="block text-purple-600">with BizSynk</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -290,7 +290,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-              Why Choose SalonSync?
+              Why Choose BizSynk?
             </h2>
             <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
               The benefits of using our comprehensive salon management solution
@@ -334,7 +334,7 @@ export default function Landing() {
                 Ready to transform your salon?
               </h2>
               <p className="mt-4 max-w-3xl text-lg text-purple-100">
-                Join hundreds of salons already using SalonSync to streamline their operations and boost productivity.
+                Join hundreds of salons already using BizSynk to streamline their operations and boost productivity.
               </p>
             </div>
             <div className="mt-8 lg:mt-0 lg:ml-8">
@@ -355,10 +355,10 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center">
             <Scissors className="h-8 w-8 text-purple-600" />
-            <span className="ml-2 text-xl font-bold text-gray-900">SalonSync</span>
+            <span className="ml-2 text-xl font-bold text-gray-900">BizSynk</span>
           </div>
           <p className="mt-4 text-center text-base text-gray-500">
-            &copy; {new Date().getFullYear()} SalonSync. All rights reserved.
+            &copy; {new Date().getFullYear()} BizSynk. All rights reserved.
           </p>
         </div>
       </footer>
