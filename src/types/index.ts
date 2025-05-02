@@ -5,9 +5,11 @@ export interface ServiceRecord {
   date: string;
   time?: string;
   staff: string;
+  staffId: string;
   clientName: string;
   services: { name: string; price: number }[];
   totalPrice: number;
+  discountAmount?: number;
   paymentMethod: string;
   createdAt?: string;
 }
@@ -17,7 +19,7 @@ export interface Staff {
   name: string;
   firstName: string;
   lastName: string;
-  role: 'Barber' | 'Stylist' | 'Nail Technician' | 'Makeup Artist' | 'Receptionist' | 'Manager';
+  role: 'Cashier' | 'Supervisor' | 'Manager';
   email: string | null;
   phone: string | null;
   status: 'in' | 'out';

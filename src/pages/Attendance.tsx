@@ -1,26 +1,28 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, MapPin, Calendar } from 'lucide-react';
-import type { Staff, Location } from '../types';
-import { formatTime, capitalizeWords } from '../utils/format';
-import { collection, getDocs, addDoc, query, where, updateDoc, doc } from 'firebase/firestore';
+import type { Location } from '../types';
+import { formatTime } from '../utils/format';
+import { collection, getDocs, addDoc, query, where, updateDoc, doc, writeBatch } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
+import SearchableStaffSelect from '../components/SearchableStaffSelect';
 
 interface ClockInModalProps {
   isOpen: boolean;
   onClose: () => void;
   onClockIn: (staffName: string, location: GeolocationCoordinates, locationId: string, locationName: string) => void;
+  staffName: string;
 }
 
 interface ClockOutModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onClockOut: (staffName: string, location: GeolocationCoordinates, locationId: string, locationName: string) => void;
+  onClockOut: () => Promise<void>;
+  staffName: string;
 }
 
-// Add this interface for attendance records
 interface AttendanceRecord {
   id: string;
   staffName: string;
@@ -33,84 +35,64 @@ interface AttendanceRecord {
   createdAt: string;
 }
 
-function ClockInModal({ isOpen, onClose, onClockIn }: ClockInModalProps) {
-  const { currentUser } = useAuth();
-  const [staffName, setStaffName] = useState('');
+function ClockInModal({ isOpen, onClose, onClockIn, staffName }: ClockInModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeLocations, setActiveLocations] = useState<Location[]>([]);
 
-  // Fetch staff name when component mounts
   useEffect(() => {
-    const fetchStaffName = async () => {
-      if (!currentUser) return;
-      
-      try {
-        const staffQuery = query(
-          collection(db, 'staff'),
-          where('userId', '==', currentUser.uid)
-        );
-        const staffSnapshot = await getDocs(staffQuery);
-        if (!staffSnapshot.empty) {
-          const staffData = staffSnapshot.docs[0].data();
-          setStaffName(capitalizeWords(staffData.name));
-        }
-      } catch (error) {
-        console.error('Error fetching staff name:', error);
-      }
-    };
+    if (!isOpen) return;
 
-    fetchStaffName();
-  }, [currentUser]);
-
-  // Fetch active locations when modal opens
-  useEffect(() => {
-    const fetchActiveLocations = async () => {
-      if (!isOpen) return;
-      
+    const fetchLocations = async () => {
       try {
-        const locationsQuery = query(
-          collection(db, 'locations'),
-          where('isActive', '==', true)
-        );
-        const locationsSnapshot = await getDocs(locationsQuery);
+        setLoading(true);
+        setError(null);
+        const locationsRef = collection(db, 'locations');
+        const locationsSnapshot = await getDocs(locationsRef);
         const locations = locationsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as Location[];
         setActiveLocations(locations);
-      } catch (error) {
-        console.error('Error fetching active locations:', error);
-        setError('Failed to fetch active locations');
+      } catch (err) {
+        setError('Failed to fetch locations. Please try again.');
+        console.error('Error fetching locations:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchActiveLocations();
+    fetchLocations();
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (activeLocations.length === 0) {
+      setError('No active locations available');
+      return;
+    }
+
+    if (!staffName) {
+      setError('Please select a staff member first');
+      return;
+    }
+
     setLoading(true);
-    setError(null);
-
     try {
-      if (activeLocations.length === 0) {
-        throw new Error('No active locations found. Please contact your administrator.');
+      const location = activeLocations[0];
+      if (!location.id || !location.name) {
+        throw new Error('Invalid location data');
       }
-
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        });
-      });
-
-      onClockIn(staffName, position.coords, activeLocations[0].id!, activeLocations[0].name);
+      await onClockIn(
+        staffName, 
+        { latitude: location.latitude, longitude: location.longitude } as GeolocationCoordinates,
+        location.id,
+        location.name
+      );
       onClose();
     } catch (err) {
-      console.error('Clock in error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to get location');
+      setError('Failed to clock in. Please try again.');
+      console.error('Error during clock in:', err);
     } finally {
       setLoading(false);
     }
@@ -139,14 +121,11 @@ function ClockInModal({ isOpen, onClose, onClockIn }: ClockInModalProps) {
         <h2 className="text-2xl font-bold mb-4">Clock In</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700">Staff Name</label>
             <input
               type="text"
               value={staffName}
-              onChange={(e) => setStaffName(e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
-              placeholder="Enter your full name"
-              required
               readOnly
             />
           </div>
@@ -213,60 +192,19 @@ function ClockInModal({ isOpen, onClose, onClockIn }: ClockInModalProps) {
   );
 }
 
-function ClockOutModal({ isOpen, onClose, onClockOut }: ClockOutModalProps) {
-  const { currentUser } = useAuth();
-  const [staffName, setStaffName] = useState('');
+function ClockOutModal({ isOpen, onClose, onClockOut, staffName }: ClockOutModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Fetch staff name when component mounts
-  useEffect(() => {
-    const fetchStaffName = async () => {
-      if (!currentUser) return;
-      
-      try {
-        const staffQuery = query(
-          collection(db, 'staff'),
-          where('userId', '==', currentUser.uid)
-        );
-        const staffSnapshot = await getDocs(staffQuery);
-        if (!staffSnapshot.empty) {
-          const staffData = staffSnapshot.docs[0].data();
-          setStaffName(capitalizeWords(staffData.name));
-        }
-      } catch (error) {
-        console.error('Error fetching staff name:', error);
-      }
-    };
-
-    fetchStaffName();
-  }, [currentUser]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-
     try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        });
-      });
-
-      console.log('Current position:', {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude
-      });
-
-      // For clock out, we don't need to check location
-      onClockOut(staffName, position.coords, 'any', 'Remote Location');
+      await onClockOut();
       onClose();
     } catch (err) {
-      console.error('Clock out error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to get location');
+      setError('Failed to clock out. Please try again.');
+      console.error('Error during clock out:', err);
     } finally {
       setLoading(false);
     }
@@ -284,7 +222,6 @@ function ClockOutModal({ isOpen, onClose, onClockOut }: ClockOutModalProps) {
             <input
               type="text"
               value={staffName}
-              onChange={(e) => setStaffName(e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
               placeholder="Enter your full name"
               required
@@ -338,47 +275,21 @@ function ClockOutModal({ isOpen, onClose, onClockOut }: ClockOutModalProps) {
 }
 
 export default function Attendance() {
-  const { currentUser } = useAuth();
-  const [staff, setStaff] = useState<Staff[]>([]);
+  const { currentUser, userRole } = useAuth();
   const [showClockInModal, setShowClockInModal] = useState(false);
   const [showClockOutModal, setShowClockOutModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<{ id: string; name: string } | null>(null);
 
-  // Fetch staff data
-  useEffect(() => {
-    const fetchStaff = async () => {
-      try {
-        if (!currentUser) return;
-        
-        // Only fetch the current staff member's data
-        const staffQuery = query(
-          collection(db, 'staff'),
-          where('userId', '==', currentUser.uid)
-        );
-        const staffSnapshot = await getDocs(staffQuery);
-        const staffData = staffSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Staff[];
-        setStaff(staffData);
-      } catch (error) {
-        console.error('Error fetching staff:', error);
-      }
-    };
-    fetchStaff();
-  }, [currentUser]);
-
-  // Fetch attendance records for selected date
   useEffect(() => {
     const fetchAttendanceRecords = async () => {
-      if (!currentUser || staff.length === 0) return;
+      if (!selectedStaff && userRole === 'admin') return;
 
       try {
         setLoading(true);
-        const staffMember = staff[0];
-        const formattedName = `${capitalizeWords(staffMember.firstName)} ${capitalizeWords(staffMember.lastName)}`;
+        const staffId = userRole === 'admin' ? selectedStaff?.id : currentUser?.uid;
 
         // Create date range for the selected date
         const startOfDay = new Date(selectedDate);
@@ -386,21 +297,13 @@ export default function Attendance() {
         const endOfDay = new Date(selectedDate);
         endOfDay.setHours(23, 59, 59, 999);
 
-        console.log('Fetching attendance records for:', {
-          staffName: formattedName,
-          startDate: startOfDay.toISOString(),
-          endDate: endOfDay.toISOString()
-        });
-
-        // Simplified query that doesn't require a composite index
         const attendanceQuery = query(
           collection(db, 'attendance'),
-          where('staffName', '==', formattedName)
+          where('staffId', '==', staffId)
         );
 
         const attendanceSnapshot = await getDocs(attendanceQuery);
         
-        // Filter the results in memory instead of in the query
         const records = attendanceSnapshot.docs
           .map(doc => ({
             id: doc.id,
@@ -412,7 +315,6 @@ export default function Attendance() {
           })
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         
-        console.log('Found attendance records:', records);
         setAttendanceRecords(records);
       } catch (error) {
         console.error('Error fetching attendance records:', error);
@@ -421,54 +323,46 @@ export default function Attendance() {
       }
     };
 
-    fetchAttendanceRecords();
-  }, [currentUser, staff, selectedDate]);
-
-  // Function to check and auto clock out staff
-  const checkAndAutoClockOut = useCallback(() => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    
-    if (currentHour >= 21) { // 9 PM
-      staff.forEach(async (member) => {
-        if (member.status === 'in') {
-          // Auto clock out the staff member
-          await handleClockOut(member.name, {
-            latitude: 0,
-            longitude: 0,
-            accuracy: 0,
-            altitude: null,
-            altitudeAccuracy: null,
-            heading: null,
-            speed: null
-          } as GeolocationCoordinates, 'auto', 'Auto Clock Out');
+    // If user is staff, automatically set their info
+    if (userRole === 'staff' && currentUser) {
+      const fetchStaffInfo = async () => {
+        try {
+          const staffQuery = query(collection(db, 'staff'), where('userId', '==', currentUser.uid));
+          const staffSnapshot = await getDocs(staffQuery);
+          if (!staffSnapshot.empty) {
+            const staffDoc = staffSnapshot.docs[0];
+            const staffData = staffDoc.data();
+            setSelectedStaff({
+              id: currentUser.uid,
+              name: staffData.name
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching staff info:', error);
         }
-      });
+      };
+      fetchStaffInfo();
     }
-  }, [staff]);
 
-  // Set up interval to check for auto clock out
-  useEffect(() => {
-    // Check immediately
-    checkAndAutoClockOut();
-    
-    // Then check every minute
-    const interval = setInterval(checkAndAutoClockOut, 60000);
-    
-    return () => clearInterval(interval);
-  }, [checkAndAutoClockOut]);
+    fetchAttendanceRecords();
+  }, [selectedStaff, selectedDate, currentUser, userRole]);
+
+  const handleStaffChange = (staffId: string, staffName: string) => {
+    console.log('Selected staff:', { id: staffId, name: staffName });
+    setSelectedStaff({ id: staffId, name: staffName });
+  };
 
   const handleClockIn = async (staffName: string, _location: GeolocationCoordinates, locationId: string, locationName: string) => {
     try {
       const now = new Date();
-      const today = now.toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+      const today = now.toISOString().split('T')[0];
 
       // Check if staff has already clocked in today
       const todayAttendanceQuery = query(
         collection(db, 'attendance'),
-        where('staffName', '==', staffName),
+        where('staffId', '==', currentUser?.uid),
         where('date', '>=', today),
-        where('date', '<', new Date(new Date(today).getTime() + 86400000).toISOString()) // Next day
+        where('date', '<', new Date(new Date(today).getTime() + 86400000).toISOString())
       );
       const todayAttendanceSnapshot = await getDocs(todayAttendanceQuery);
 
@@ -478,7 +372,8 @@ export default function Attendance() {
       }
 
       const attendanceData = {
-        staffName,
+        staffId: currentUser?.uid,
+        staffName: staffName,
         date: now.toISOString(),
         timeIn: now.toISOString(),
         timeOut: null,
@@ -488,12 +383,10 @@ export default function Attendance() {
         createdAt: now.toISOString()
       };
 
-      console.log('Adding attendance record:', attendanceData);
-      const docRef = await addDoc(collection(db, 'attendance'), attendanceData);
-      console.log('Added attendance record with ID:', docRef.id);
+      await addDoc(collection(db, 'attendance'), attendanceData);
       
       // Update staff status
-      const staffQuery = query(collection(db, 'staff'), where('name', '==', staffName));
+      const staffQuery = query(collection(db, 'staff'), where('userId', '==', currentUser?.uid));
       const staffSnapshot = await getDocs(staffQuery);
       if (!staffSnapshot.empty) {
         const staffDoc = staffSnapshot.docs[0];
@@ -501,20 +394,7 @@ export default function Attendance() {
           status: 'in',
           lastClockIn: now.toISOString()
         });
-        console.log('Updated staff status to in');
       }
-
-      // Refresh staff data and attendance records
-      const updatedStaffQuery = query(
-        collection(db, 'staff'),
-        where('userId', '==', currentUser?.uid)
-      );
-      const updatedStaffSnapshot = await getDocs(updatedStaffQuery);
-      const updatedStaffData = updatedStaffSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Staff[];
-      setStaff(updatedStaffData);
 
       // Refresh attendance records
       const startOfDay = new Date(selectedDate);
@@ -524,7 +404,7 @@ export default function Attendance() {
 
       const updatedAttendanceQuery = query(
         collection(db, 'attendance'),
-        where('staffName', '==', staffName)
+        where('staffId', '==', currentUser?.uid)
       );
 
       const updatedAttendanceSnapshot = await getDocs(updatedAttendanceQuery);
@@ -540,7 +420,6 @@ export default function Attendance() {
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setAttendanceRecords(updatedRecords);
 
-      // Show success notification
       toast.success('Clock in successful! Welcome to work.');
     } catch (error) {
       console.error('Error recording clock in:', error);
@@ -548,17 +427,17 @@ export default function Attendance() {
     }
   };
 
-  const handleClockOut = async (staffName: string, _location: GeolocationCoordinates, locationId: string, locationName: string) => {
+  const handleClockOut = async () => {
     try {
       const now = new Date();
-      const today = now.toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+      const today = now.toISOString().split('T')[0];
 
       // Find today's clock-in record for this staff member
       const todayAttendanceQuery = query(
         collection(db, 'attendance'),
-        where('staffName', '==', staffName),
+        where('staffId', '==', currentUser?.uid),
         where('date', '>=', today),
-        where('date', '<', new Date(new Date(today).getTime() + 86400000).toISOString()), // Next day
+        where('date', '<', new Date(new Date(today).getTime() + 86400000).toISOString()),
         where('timeOut', '==', null)
       );
       const todayAttendanceSnapshot = await getDocs(todayAttendanceQuery);
@@ -569,15 +448,18 @@ export default function Attendance() {
       }
 
       const attendanceDoc = todayAttendanceSnapshot.docs[0];
+      const clockInData = attendanceDoc.data();
+
+      // Use the same location as clock-in
       await updateDoc(doc(db, 'attendance', attendanceDoc.id), {
         timeOut: now.toISOString(),
         status: 'completed',
-        locationId,
-        locationName
+        locationId: clockInData.locationId,
+        locationName: clockInData.locationName
       });
 
       // Update staff status
-      const staffQuery = query(collection(db, 'staff'), where('name', '==', staffName));
+      const staffQuery = query(collection(db, 'staff'), where('userId', '==', currentUser?.uid));
       const staffSnapshot = await getDocs(staffQuery);
       if (!staffSnapshot.empty) {
         const staffDoc = staffSnapshot.docs[0];
@@ -595,104 +477,187 @@ export default function Attendance() {
     }
   };
 
+  // Function to auto clock-out all staff at 9 PM
+  const autoClockOutAllStaff = async () => {
+    try {
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+
+      // Find all active clock-ins
+      const activeAttendanceQuery = query(
+        collection(db, 'attendance'),
+        where('date', '>=', today),
+        where('date', '<', new Date(new Date(today).getTime() + 86400000).toISOString()),
+        where('timeOut', '==', null)
+      );
+      const activeAttendanceSnapshot = await getDocs(activeAttendanceQuery);
+
+      // Batch update for all active attendance records
+      const batch = writeBatch(db);
+      activeAttendanceSnapshot.docs.forEach(doc => {
+        const clockInData = doc.data();
+        batch.update(doc.ref, {
+          timeOut: now.toISOString(),
+          status: 'completed',
+          locationId: clockInData.locationId,
+          locationName: clockInData.locationName
+        });
+      });
+
+      // Update all active staff status
+      const activeStaffQuery = query(
+        collection(db, 'staff'),
+        where('status', '==', 'in')
+      );
+      const activeStaffSnapshot = await getDocs(activeStaffQuery);
+      
+      activeStaffSnapshot.docs.forEach(doc => {
+        batch.update(doc.ref, {
+          status: 'out',
+          lastClockOut: now.toISOString()
+        });
+      });
+
+      await batch.commit();
+      toast.success('Auto clock-out completed for all staff');
+    } catch (error) {
+      console.error('Error during auto clock-out:', error);
+      toast.error('Failed to auto clock-out staff');
+    }
+  };
+
+  // Set up auto clock-out timer
+  useEffect(() => {
+    const checkAndAutoClockOut = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+
+      // Check if it's 9 PM (21:00)
+      if (hours === 21 && minutes === 0) {
+        autoClockOutAllStaff();
+      }
+    };
+
+    // Check every minute
+    const timer = setInterval(checkAndAutoClockOut, 60000);
+
+    // Cleanup timer on component unmount
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">Attendance Monitoring</h1>
       
-      {/* Clock In/Out Section */}
+      {/* Staff Selection */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Clock In/Out</h2>
-        <div className="flex gap-4">
-          <button 
-            onClick={() => setShowClockInModal(true)}
-            className="flex-1 bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-          >
-            <Clock className="inline-block w-5 h-5 mr-2" />
-            Clock In
-          </button>
-          <button 
-            onClick={() => setShowClockOutModal(true)}
-            className="flex-1 bg-red-600 text-white py-3 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-          >
-            <Clock className="inline-block w-5 h-5 mr-2" />
-            Clock Out
-          </button>
-        </div>
+        <h2 className="text-xl font-semibold mb-4">Select Staff</h2>
+        <SearchableStaffSelect
+          onChange={handleStaffChange}
+          label="Staff Member"
+          required
+        />
       </div>
+      
+      {/* Clock In/Out Section */}
+      {selectedStaff && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Clock In/Out</h2>
+          <div className="flex gap-4">
+            <button 
+              onClick={() => setShowClockInModal(true)}
+              className="flex-1 bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            >
+              <Clock className="inline-block w-5 h-5 mr-2" />
+              Clock In
+            </button>
+            <button 
+              onClick={() => setShowClockOutModal(true)}
+              className="flex-1 bg-red-600 text-white py-3 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            >
+              <Clock className="inline-block w-5 h-5 mr-2" />
+              Clock Out
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Attendance Records */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Attendance Records</h2>
-          <div className="flex items-center space-x-4">
-            <Calendar className="w-5 h-5 text-gray-500" />
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
-            />
+      {selectedStaff && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Attendance Records</h2>
+            <div className="flex items-center space-x-4">
+              <Calendar className="w-5 h-5 text-gray-500" />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+              />
+            </div>
           </div>
-        </div>
 
-        {staff.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">No staff record found</p>
-        ) : (
-          <div>
-            {loading ? (
-              <p className="text-gray-500 text-center py-4">Loading records...</p>
-            ) : attendanceRecords.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No records for this date</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time In</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Out</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+          {loading ? (
+            <p className="text-gray-500 text-center py-4">Loading records...</p>
+          ) : attendanceRecords.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">No records for this date</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time In</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Out</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {attendanceRecords.map((record) => (
+                    <tr key={record.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {record.staffName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatTime(record.timeIn)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {record.timeOut ? formatTime(record.timeOut) : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {record.locationName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          record.status === 'present' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {record.status === 'present' ? 'Present' : 'Completed'}
+                        </span>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {attendanceRecords.map((record) => (
-                      <tr key={record.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatTime(record.timeIn)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {record.timeOut ? formatTime(record.timeOut) : '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {record.locationName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            record.status === 'present' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {record.status === 'present' ? 'Present' : 'Completed'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       <ClockInModal
         isOpen={showClockInModal}
         onClose={() => setShowClockInModal(false)}
         onClockIn={handleClockIn}
+        staffName={selectedStaff?.name || ''}
       />
 
       <ClockOutModal
         isOpen={showClockOutModal}
         onClose={() => setShowClockOutModal(false)}
         onClockOut={handleClockOut}
+        staffName={selectedStaff?.name || ''}
       />
     </div>
   );

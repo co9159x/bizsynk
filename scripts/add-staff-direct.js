@@ -13,60 +13,22 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-const barbers = [
-  "Egunjobi Adewale",
-  "Salihu Tenimu",
-  "Ogebe Onazi Emmanuel",
-  "Mathew Neeyu",
-  "Patrick Poore",
-  "Woche Emmanuel",
-  "Happiness Ogbegbor",
-  "Rapheal Ohenhen",
-  "Salihu Adashina",
-  "Rilwan Amos",
-  "Moses Collins",
-  "Foloki Richard",
-  "Iordye Rhassan",
-  "Amedu Mark",
-  "Otesi Soibi",
-  "Toye Emmanuel",
-  "Tahiru Audu",
-  "Oyedele Blessing",
-  "Yusuf Nanaaishat",
-  "Blessing Ajayi",
-  "Gabriel Sunday",
-  "Chimoses Okpana",
-  "Yahaya Peter",
-  "Okafor Tanimu",
-  "Egunjobi Precious",
-  "Abdullahi Mojbello",
-  "Ayobami Ayeriti",
-  "Dimanyi Esther",
-  "Chinweuba Christian"
+const cashiers = [
+  "John Smith",
+  "Jane Doe",
+  "Michael Johnson",
+  "Sarah Williams"
 ];
 
-const stylists = [
-  "Ene Helen Achimi",
-  "Esther Jacob Effiong",
-  "Blessing Richard",
-  "Rukayat Kadieri",
-  "Bilikisu Abudulraheem",
-  "Philip Aaron Istifanus",
-  "Abigail Adaeze Nwagbara",
-  "Funmilayo Olajide",
-  "Adeniyi Ruqoyan Omobolanle",
-  "Susan Aboh",
-  "Hogan Anietie",
-  "Glory Michael",
-  "Barnabas Obi",
-  "John Dorcas",
-  "Egwundu Hannah",
-  "Eye Tochi",
-  "Favour Uchenna Chukwuma",
-  "Korkyaa Kumawuese Felicity",
-  "Usman",
-  "Mercy",
-  "Olayinka Rachael"
+const supervisors = [
+  "Robert Brown",
+  "Emily Davis",
+  "David Wilson"
+];
+
+const managers = [
+  "Jennifer Taylor",
+  "James Anderson"
 ];
 
 async function addStaff() {
@@ -74,33 +36,48 @@ async function addStaff() {
     const batch = db.batch();
     const staffCollection = db.collection('staff');
 
-    // Add barbers
-    barbers.forEach((name, index) => {
+    // Add cashiers
+    cashiers.forEach((name, index) => {
       const docRef = staffCollection.doc();
       batch.set(docRef, {
         name,
-        role: "Barber",
+        role: "Cashier",
         email: name.toLowerCase().replace(/\s+/g, '.') + "@bizsynk.com",
         phone: `+234 123 456 ${7890 + index}`,
         status: "out",
         lastClockIn: null,
         lastClockOut: null,
-        category: "Barbers"
+        category: "Cashiers"
       });
     });
 
-    // Add stylists
-    stylists.forEach((name, index) => {
+    // Add supervisors
+    supervisors.forEach((name, index) => {
       const docRef = staffCollection.doc();
       batch.set(docRef, {
         name,
-        role: "Stylist",
+        role: "Supervisor",
         email: name.toLowerCase().replace(/\s+/g, '.') + "@bizsynk.com",
         phone: `+234 123 456 ${7919 + index}`,
         status: "out",
         lastClockIn: null,
         lastClockOut: null,
-        category: "Stylists"
+        category: "Supervisors"
+      });
+    });
+
+    // Add managers
+    managers.forEach((name, index) => {
+      const docRef = staffCollection.doc();
+      batch.set(docRef, {
+        name,
+        role: "Manager",
+        email: name.toLowerCase().replace(/\s+/g, '.') + "@bizsynk.com",
+        phone: `+234 123 456 ${7930 + index}`,
+        status: "out",
+        lastClockIn: null,
+        lastClockOut: null,
+        category: "Managers"
       });
     });
 

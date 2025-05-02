@@ -12,7 +12,8 @@
     "init-db": "npm run build-scripts && node dist/scripts/init-db.js",
     "add-staff": "npm run build-scripts && node dist/scripts/add-staff.js",
     "check-staff": "npm run build-scripts && node dist/scripts/check-staff.js",
-    "initialize-db": "ts-node --esm src/scripts/initializeDatabase.ts"
+    "initialize-db": "ts-node --esm src/scripts/initializeDatabase.ts",
+    "setup-services": "dotenv -e .env -- ts-node scripts/add-services.ts"
   },
   "dependencies": {
     "@capacitor/android": "^7.2.0",
@@ -40,6 +41,7 @@
     "@typescript-eslint/parser": "^7.0.2",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.18",
+    "dotenv-cli": "^8.0.0",
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",

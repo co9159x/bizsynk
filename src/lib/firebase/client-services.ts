@@ -47,40 +47,53 @@ export const addServiceRecord = async (record: Omit<ServiceRecord, 'id'>) => {
   }
 };
 
-export const getServiceRecords = async (date?: string) => {
+export const getServiceRecords = async (date?: string, staffId?: string) => {
   try {
     const recordsRef = collection(db, 'records');
     let q = query(recordsRef);
     
+    // Build query based on provided filters
+    const queryFilters = [];
+    
     if (date) {
-      q = query(q, where('date', '==', date));
+      queryFilters.push(where('date', '==', date));
     }
+
+    if (staffId) {
+      queryFilters.push(where('staffId', '==', staffId));
+    }
+
+    // Apply filters and ordering
+    q = query(recordsRef, ...queryFilters, orderBy('createdAt', 'desc'));
     
-    q = query(q, orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as ServiceRecord[];
+    try {
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as ServiceRecord[];
+    } catch (indexError) {
+      // If index error occurs, fall back to client-side filtering
+      console.warn('Index not ready, falling back to client-side filtering');
+      const baseQuery = query(recordsRef, orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(baseQuery);
+      let records = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as ServiceRecord[];
+
+      // Apply filters in memory
+      if (date) {
+        records = records.filter(record => record.date === date);
+      }
+      if (staffId) {
+        records = records.filter(record => record.staffId === staffId);
+      }
+
+      return records;
+    }
   } catch (error) {
     console.error('Error getting service records:', error);
-    if (error instanceof Error && error.message.includes('index')) {
-      try {
-        const recordsRef = collection(db, 'records');
-        const q = date 
-          ? query(recordsRef, where('date', '==', date))
-          : query(recordsRef);
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as ServiceRecord[];
-      } catch (fallbackError) {
-        console.error('Error with fallback query:', fallbackError);
-        return [];
-      }
-    }
     return [];
   }
 };
@@ -200,26 +213,15 @@ export const getServices = async (): Promise<ServiceCategory[]> => {
   try {
     const servicesRef = collection(db, 'services');
     const snapshot = await getDocs(servicesRef);
-    const servicesData = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as Service[];
-
-    // Group services by category
-    const servicesByCategory = servicesData.reduce((acc, service) => {
-      const category = service.category || 'Uncategorized';
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(service);
-      return acc;
-    }, {} as Record<string, Service[]>);
-
-    // Convert to array format
-    return Object.entries(servicesByCategory).map(([category, services]) => ({
-      category,
-      services
-    }));
+    console.log('Raw services data:', snapshot.docs.map(doc => doc.data()));
+    
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        category: data.category,
+        services: data.services || []
+      };
+    });
   } catch (error) {
     console.error('Error fetching services:', error);
     throw error;

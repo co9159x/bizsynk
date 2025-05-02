@@ -6,6 +6,7 @@ import { Timestamp } from 'firebase/firestore';
 import { AlertTriangle, CheckCircle, XCircle, Filter, Trash2 } from 'lucide-react';
 import { collection, getDocs, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase/config';
+import { capitalizeWords } from '../utils/format';
 
 const formatDate = (date: Timestamp | string | null | undefined) => {
   if (!date) return 'N/A';
@@ -143,7 +144,7 @@ export default function Inventory() {
         quantity: formData.quantity,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        updatedBy: userRole === 'staff' ? 'Staff' : 'Admin',
+        updatedBy: userRole === 'admin' ? 'Admin' : userRole ? capitalizeWords(userRole) : 'Unknown',
       };
 
       const success = await addInventoryItem(newItem);
@@ -178,7 +179,7 @@ export default function Inventory() {
       const success = await updateInventoryItem(existingItem.id, {
         quantity: updatedQuantity,
         updatedAt: Timestamp.now(),
-        updatedBy: userRole === 'staff' ? 'Staff' : 'Admin',
+        updatedBy: userRole === 'admin' ? 'Admin' : userRole ? capitalizeWords(userRole) : 'Unknown',
       });
 
       if (success) {
@@ -308,54 +309,52 @@ export default function Inventory() {
         />
       )}
 
-      {userRole === 'admin' && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Add or Update Item</h2>
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Product Name</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                placeholder="Enter product name"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Quantity</label>
-              <input
-                type="number"
-                name="quantity"
-                value={formData.quantity}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                placeholder="Enter quantity"
-                required
-                min="0"
-              />
-            </div>
-            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={handleAddItem}
-                className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-              >
-                Add New Item
-              </button>
-              <button
-                type="button"
-                onClick={handleUpdateItem}
-                className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-              >
-                Update Existing Item
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold mb-4">Add or Update Item</h2>
+        <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Product Name</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+              placeholder="Enter product name"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Quantity</label>
+            <input
+              type="number"
+              name="quantity"
+              value={formData.quantity}
+              onChange={handleChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+              placeholder="Enter quantity"
+              required
+              min="0"
+            />
+          </div>
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={handleAddItem}
+              className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            >
+              Add New Item
+            </button>
+            <button
+              type="button"
+              onClick={handleUpdateItem}
+              className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+            >
+              Update Existing Item
+            </button>
+          </div>
+        </form>
+      </div>
 
       {userRole === 'staff' && (
         <div className="bg-white rounded-lg shadow p-6">

@@ -1,81 +1,53 @@
 import { addMultipleStaff, clearStaffCollection } from '../src/lib/firebase/services.js';
 
-const barbers = [
-  "Egunjobi Adewale",
-  "Salihu Tenimu",
-  "Ogebe Onazi Emmanuel",
-  "Mathew Neeyu",
-  "Patrick Poore",
-  "Woche Emmanuel",
-  "Happiness Ogbegbor",
-  "Rapheal Ohenhen",
-  "Salihu Adashina",
-  "Rilwan Amos",
-  "Moses Collins",
-  "Foloki Richard",
-  "Iordye Rhassan",
-  "Amedu Mark",
-  "Otesi Soibi",
-  "Toye Emmanuel",
-  "Tahiru Audu",
-  "Oyedele Blessing",
-  "Yusuf Nanaaishat",
-  "Blessing Ajayi",
-  "Gabriel Sunday",
-  "Chimoses Okpana",
-  "Yahaya Peter",
-  "Okafor Tanimu",
-  "Egunjobi Precious",
-  "Abdullahi Mojbello",
-  "Ayobami Ayeriti",
-  "Dimanyi Esther",
-  "Chinweuba Christian"
+const cashiers = [
+  "John Smith",
+  "Jane Doe",
+  "Michael Johnson",
+  "Sarah Williams"
 ];
 
-const stylists = [
-  "Ene Helen Achimi",
-  "Esther Jacob Effiong",
-  "Blessing Richard",
-  "Rukayat Kadieri",
-  "Bilikisu Abudulraheem",
-  "Philip Aaron Istifanus",
-  "Abigail Adaeze Nwagbara",
-  "Funmilayo Olajide",
-  "Adeniyi Ruqoyan Omobolanle",
-  "Susan Aboh",
-  "Hogan Anietie",
-  "Glory Michael",
-  "Barnabas Obi",
-  "John Dorcas",
-  "Egwundu Hannah",
-  "Eye Tochi",
-  "Favour Uchenna Chukwuma",
-  "Korkyaa Kumawuese Felicity",
-  "Usman",
-  "Mercy",
-  "Olayinka Rachael"
+const supervisors = [
+  "Robert Brown",
+  "Emily Davis",
+  "David Wilson"
+];
+
+const managers = [
+  "Jennifer Taylor",
+  "James Anderson"
 ];
 
 const staffData = [
-  ...barbers.map(name => ({
+  ...cashiers.map(name => ({
     name,
-    role: "Barber" as const,
+    role: "Cashier" as const,
     email: null,
     phone: null,
     status: "out" as const,
     lastClockIn: null,
     lastClockOut: null,
-    category: "Barbers"
+    category: "Cashiers"
   })),
-  ...stylists.map(name => ({
+  ...supervisors.map(name => ({
     name,
-    role: "Stylist" as const,
+    role: "Supervisor" as const,
     email: null,
     phone: null,
     status: "out" as const,
     lastClockIn: null,
     lastClockOut: null,
-    category: "Stylists"
+    category: "Supervisors"
+  })),
+  ...managers.map(name => ({
+    name,
+    role: "Manager" as const,
+    email: null,
+    phone: null,
+    status: "out" as const,
+    lastClockIn: null,
+    lastClockOut: null,
+    category: "Managers"
   }))
 ];
 

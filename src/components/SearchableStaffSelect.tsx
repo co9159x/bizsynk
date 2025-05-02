@@ -1,36 +1,34 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import { Staff } from '../types';
+import { getStaff } from '../lib/firebase/client-services';
 import { capitalizeWords } from '../utils/format';
 
 interface SearchableStaffSelectProps {
-  onChange: (value: string) => void;
+  onChange: (staffId: string, staffName: string) => void;
   label?: string;
+  required?: boolean;
 }
 
-export default function SearchableStaffSelect({ onChange, label = 'Staff' }: SearchableStaffSelectProps) {
+export default function SearchableStaffSelect({ onChange, label = 'Staff', required = false }: SearchableStaffSelectProps) {
   const [staff, setStaff] = useState<Staff[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedStaffName, setSelectedStaffName] = useState('');
 
   useEffect(() => {
-    async function fetchStaff() {
-      const staffCollection = collection(db, 'staff');
-      const staffSnapshot = await getDocs(staffCollection);
-      const staffList = staffSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Staff));
-      setStaff(staffList);
-    }
+    const fetchStaff = async () => {
+      try {
+        const staffData = await getStaff();
+        setStaff(staffData);
+      } catch (error) {
+        console.error('Error fetching staff:', error);
+      }
+    };
     fetchStaff();
   }, []);
 
-  const filteredStaff = staff.filter(staffMember => {
-    const firstName = staffMember.firstName || '';
-    const lastName = staffMember.lastName || '';
-    const fullName = `${capitalizeWords(firstName)} ${capitalizeWords(lastName)}`;
+  const filteredStaff = staff.filter(member => {
+    const fullName = `${capitalizeWords(member.firstName)} ${capitalizeWords(member.lastName)}`;
     return fullName.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
@@ -45,31 +43,34 @@ export default function SearchableStaffSelect({ onChange, label = 'Staff' }: Sea
       >
         <input
           type="text"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-          value={searchTerm}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+          value={selectedStaffName || searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
+            setSelectedStaffName('');
             setIsOpen(true);
           }}
           placeholder="Search staff..."
+          required={required}
+          readOnly
         />
         {isOpen && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
             {filteredStaff.map((staffMember) => (
               <div
                 key={staffMember.id}
                 className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                 onClick={() => {
                   if (staffMember.id) {
-                    onChange(staffMember.id);
+                    const fullName = `${capitalizeWords(staffMember.firstName)} ${capitalizeWords(staffMember.lastName)}`;
+                    onChange(staffMember.id, fullName);
+                    setSelectedStaffName(fullName);
+                    setSearchTerm('');
+                    setIsOpen(false);
                   }
-                  const firstName = staffMember.firstName || '';
-                  const lastName = staffMember.lastName || '';
-                  setSearchTerm(`${capitalizeWords(firstName)} ${capitalizeWords(lastName)}`);
-                  setIsOpen(false);
                 }}
               >
-                {capitalizeWords(staffMember.firstName || '')} {capitalizeWords(staffMember.lastName || '')}
+                {capitalizeWords(staffMember.firstName)} {capitalizeWords(staffMember.lastName)}
               </div>
             ))}
           </div>

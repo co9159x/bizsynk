@@ -21,6 +21,11 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff';
     }
 
+    // Helper function to check if document belongs to the current user
+    function isOwner(staffId) {
+      return request.auth.uid == staffId;
+    }
+
     // Allow initial setup - this will be removed after initialization
     match /{document=**} {
       allow read, write: if true;
@@ -46,13 +51,13 @@ service cloud.firestore {
 
     // Records collection rules
     match /records/{document=**} {
-      allow read: if isAuthenticated();
+      allow read: if isAdmin() || (isStaff() && resource.data.staffId == request.auth.uid);
       allow write: if isStaff() || isAdmin();
     }
 
     // Attendance collection rules
     match /attendance/{document=**} {
-      allow read: if isAuthenticated();
+      allow read: if isAdmin() || (isStaff() && resource.data.staffId == request.auth.uid);
       allow write: if isStaff() || isAdmin();
     }
 

@@ -6,11 +6,8 @@ import { db } from '../lib/firebase';
 import { capitalizeWords } from '../utils/format';
 
 const STAFF_ROLES = [
-  'Barber',
-  'Stylist',
-  'Nail Technician',
-  'Makeup Artist',
-  'Receptionist',
+  'Cashier',
+  'Supervisor',
   'Manager'
 ] as const;
 
@@ -20,7 +17,7 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [role, setRole] = useState<typeof STAFF_ROLES[number]>('Barber');
+  const [role, setRole] = useState<typeof STAFF_ROLES[number]>('Cashier');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();

@@ -33,8 +33,13 @@ export default function SearchableServiceSelect({
 
   useEffect(() => {
     const fetchServices = async () => {
-      const servicesData = await getServices();
-      setServices(servicesData as ServiceCategory[]);
+      try {
+        const servicesData = await getServices();
+        console.log('Fetched services:', servicesData);
+        setServices(servicesData as ServiceCategory[]);
+      } catch (error) {
+        console.error('Error fetching services:', error);
+      }
     };
     fetchServices();
   }, []);
@@ -63,10 +68,10 @@ export default function SearchableServiceSelect({
   // Filter services based on search term
   const filteredServices = services.reduce<ServiceCategory[]>((acc, category) => {
     const matchingServices = category.services.filter(service => {
-      const searchLower = searchTerm.toLowerCase();
+      const searchLower = searchTerm?.toLowerCase() || '';
       return (
-        service.name.toLowerCase().includes(searchLower) ||
-        category.category.toLowerCase().includes(searchLower)
+        service?.name?.toLowerCase().includes(searchLower) ||
+        category?.category?.toLowerCase().includes(searchLower)
       );
     });
 
@@ -79,6 +84,9 @@ export default function SearchableServiceSelect({
 
     return acc;
   }, []);
+
+  console.log('Current services state:', services);
+  console.log('Filtered services:', filteredServices);
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
@@ -111,7 +119,7 @@ export default function SearchableServiceSelect({
                 <div className="font-medium text-gray-700">{category.category}</div>
                 {category.services.map((service) => (
                   <div
-                    key={service.name}
+                    key={`${category.category}-${service.name}`}
                     className="p-2 hover:bg-gray-100 cursor-pointer"
                     onClick={() => {
                       onChange(service.name);
