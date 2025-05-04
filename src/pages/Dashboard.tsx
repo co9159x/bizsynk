@@ -455,15 +455,10 @@ export default function Dashboard() {
                       {formatCurrency(monthlyRevenue)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        attendance?.status === 'present'
-                          ? 'bg-green-100 text-green-800'
-                          : attendance?.status === 'late'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                      }`}>
-                        {attendance?.status || 'absent'}
-                      </span>
+                      {attendance?.status === 'present'
+                        ? <span className="text-green-500">Present</span>
+                        : <span className="text-red-500">Completed</span>
+                      }
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {attendance?.timeIn ? new Date(attendance.timeIn).toLocaleTimeString() : '-'}
@@ -506,15 +501,10 @@ export default function Dashboard() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.timeIn || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.timeOut || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        record.status === 'present' 
-                          ? 'bg-green-100 text-green-800' 
-                          : record.status === 'late' 
-                            ? 'bg-yellow-100 text-yellow-800' 
-                            : 'bg-red-100 text-red-800'
-                      }`}>
-                        {record.status}
-                      </span>
+                      {record.status === 'present'
+                        ? <span className="text-green-500">Present</span>
+                        : <span className="text-red-500">Completed</span>
+                      }
                     </td>
                   </tr>
                 ))

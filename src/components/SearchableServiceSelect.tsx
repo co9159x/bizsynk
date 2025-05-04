@@ -34,9 +34,9 @@ export default function SearchableServiceSelect({
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const servicesData = await getServices();
+      const servicesData = await getServices();
         console.log('Fetched services:', servicesData);
-        setServices(servicesData as ServiceCategory[]);
+      setServices(servicesData as ServiceCategory[]);
       } catch (error) {
         console.error('Error fetching services:', error);
       }

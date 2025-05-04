@@ -7,28 +7,53 @@ interface SearchableStaffSelectProps {
   onChange: (staffId: string, staffName: string) => void;
   label?: string;
   required?: boolean;
+  staffList?: Array<{ id: string; name: string }>;
+  placeholder?: string;
 }
 
-export default function SearchableStaffSelect({ onChange, label = 'Staff', required = false }: SearchableStaffSelectProps) {
+export default function SearchableStaffSelect({ 
+  onChange, 
+  label = 'Staff', 
+  required = false,
+  staffList,
+  placeholder = 'Search staff...'
+}: SearchableStaffSelectProps) {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStaffName, setSelectedStaffName] = useState('');
 
   useEffect(() => {
-    const fetchStaff = async () => {
-      try {
-        const staffData = await getStaff();
-        setStaff(staffData);
-      } catch (error) {
-        console.error('Error fetching staff:', error);
-      }
-    };
-    fetchStaff();
-  }, []);
+    if (staffList) {
+      // If staffList is provided, use it instead of fetching all staff
+      setStaff(staffList.map(s => ({
+        id: s.id,
+        name: s.name,
+        firstName: s.name.split(' ')[0],
+        lastName: s.name.split(' ')[1] || '',
+        role: 'Cashier' as const,
+        email: null,
+        phone: null,
+        status: 'in',
+        lastClockIn: null,
+        lastClockOut: null
+      })));
+    } else {
+      // Otherwise fetch all staff
+      const fetchStaff = async () => {
+        try {
+          const staffData = await getStaff();
+          setStaff(staffData);
+        } catch (error) {
+          console.error('Error fetching staff:', error);
+        }
+      };
+      fetchStaff();
+    }
+  }, [staffList]);
 
   const filteredStaff = staff.filter(member => {
-    const fullName = `${capitalizeWords(member.firstName)} ${capitalizeWords(member.lastName)}`;
+    const fullName = member.name || `${capitalizeWords(member.firstName)} ${capitalizeWords(member.lastName)}`;
     return fullName.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
@@ -50,29 +75,33 @@ export default function SearchableStaffSelect({ onChange, label = 'Staff', requi
             setSelectedStaffName('');
             setIsOpen(true);
           }}
-          placeholder="Search staff..."
+          placeholder={placeholder}
           required={required}
           readOnly
         />
         {isOpen && (
           <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-            {filteredStaff.map((staffMember) => (
-              <div
-                key={staffMember.id}
-                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => {
-                  if (staffMember.id) {
-                    const fullName = `${capitalizeWords(staffMember.firstName)} ${capitalizeWords(staffMember.lastName)}`;
-                    onChange(staffMember.id, fullName);
-                    setSelectedStaffName(fullName);
-                    setSearchTerm('');
-                    setIsOpen(false);
-                  }
-                }}
-              >
-                {capitalizeWords(staffMember.firstName)} {capitalizeWords(staffMember.lastName)}
-              </div>
-            ))}
+            {filteredStaff.length === 0 ? (
+              <div className="px-3 py-2 text-gray-500">No staff members found</div>
+            ) : (
+              filteredStaff.map((staffMember) => (
+                <div
+                  key={staffMember.id}
+                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => {
+                    if (staffMember.id) {
+                      const fullName = staffMember.name || `${capitalizeWords(staffMember.firstName)} ${capitalizeWords(staffMember.lastName)}`;
+                      onChange(staffMember.id, fullName);
+                      setSelectedStaffName(fullName);
+                      setSearchTerm('');
+                      setIsOpen(false);
+                    }
+                  }}
+                >
+                  {staffMember.name || `${capitalizeWords(staffMember.firstName)} ${capitalizeWords(staffMember.lastName)}`}
+                </div>
+              ))
+            )}
           </div>
         )}
       </div>

@@ -82,30 +82,30 @@ export default function Records() {
       const currentTime = format(now, 'HH:mm:ss');
 
       await addServiceRecord({
-        date: currentDate,
-        time: currentTime,
+          date: currentDate,
+          time: currentTime,
         staff: formData.staff,
         staffId: formData.staffId,
-        clientName: capitalizeWords(formData.clientName),
+          clientName: capitalizeWords(formData.clientName),
         services: formData.services,
         totalPrice: formData.finalPrice,
         discountAmount: Number(formData.discountAmount) || 0,
-        paymentMethod: formData.paymentMethod,
+          paymentMethod: formData.paymentMethod,
       });
 
       setFormData(prev => ({
         ...prev,
-        clientName: '',
-        clientPhone: '',
-        services: [],
-        totalPrice: 0,
+          clientName: '',
+          clientPhone: '',
+          services: [],
+          totalPrice: 0,
         discountAmount: '',
         finalPrice: 0,
         paymentMethod: ''
       }));
       
       const dateRecords = await getServiceRecords(selectedDate, userRole === 'staff' ? currentUser?.uid : undefined);
-      setRecords(dateRecords);
+        setRecords(dateRecords);
     } catch (error) {
       console.error('Error adding record:', error);
     } finally {
@@ -121,7 +121,7 @@ export default function Records() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">Service Records</h1>
-
+      
       {/* Add Record Form */}
       <div className="bg-white rounded-lg shadow p-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -195,33 +195,33 @@ export default function Records() {
             <div className="md:col-span-2">
               <div className="mt-4">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Selected Services:</h3>
-                <div className="space-y-2">
-                  {formData.services.map((service, index) => (
+              <div className="space-y-2">
+                {formData.services.map((service, index) => (
                     <div key={`${service.name}-${index}`} className="flex justify-between items-center bg-gray-50 p-3 rounded-md">
                       <span className="text-gray-900">{service.name}</span>
-                      <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-4">
                         <span className="text-gray-600">{formatCurrency(service.price)}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
+                      <button
+                        type="button"
+                        onClick={() => {
                             setFormData(prev => {
                               const newServices = prev.services.filter((_, i) => i !== index);
                               const newTotalPrice = newServices.reduce((sum, s) => sum + s.price, 0);
                               return {
-                                ...prev,
+                            ...prev,
                                 services: newServices,
                                 totalPrice: newTotalPrice,
                                 finalPrice: newTotalPrice - (Number(prev.discountAmount) || 0)
                               };
                             });
-                          }}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          Remove
-                        </button>
-                      </div>
+                        }}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Remove
+                      </button>
                     </div>
-                  ))}
+                  </div>
+                ))}
                 </div>
               </div>
             </div>

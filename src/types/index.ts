@@ -58,12 +58,14 @@ export interface AttendanceRecord {
   staffId: string;
   staffName: string;
   date: string;
-  timeIn: string | null;
+  timeIn: string;
   timeOut: string | null;
-  status: 'present' | 'late' | 'absent';
-  locationId?: string; // Reference to the location used for clock-in
-  locationName?: string; // Name of the location for easy reference
+  status: 'present' | 'completed';
+  locationId: string;
+  locationName: string;
   createdAt?: string;
+  clockInStatus: 'early' | 'late';
+  clockOutStatus: 'on-time' | 'left-early' | null;
 }
 
 export interface Service {
