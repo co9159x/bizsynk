@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { BarChart3, Users, DollarSign, Calendar, Filter } from 'lucide-react';
 import type { ServiceRecord, Staff, AttendanceRecord } from '../types';
 import { formatCurrency, formatDate } from '../utils/format';
-import { collection, getDocs, query, where, orderBy, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, addDoc, Timestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Line } from 'react-chartjs-2';
 import {
@@ -31,6 +31,7 @@ export default function Dashboard() {
   const [serviceRecords, setServiceRecords] = useState<ServiceRecord[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [pendingUsers, setPendingUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [revenueData, setRevenueData] = useState<{ labels: string[]; data: number[] }>({
     labels: [],
@@ -48,6 +49,18 @@ export default function Dashboard() {
       try {
         setLoading(true);
         
+        // Fetch pending users
+        const usersQuery = query(
+          collection(db, 'users'),
+          where('isApproved', '==', false)
+        );
+        const usersSnapshot = await getDocs(usersQuery);
+        const pendingUsersData = usersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setPendingUsers(pendingUsersData);
+
         // Fetch service records for today
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -265,6 +278,22 @@ export default function Dashboard() {
     member.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleUserApproval = async (userId: string, approve: boolean) => {
+    try {
+      const userRef = doc(db, 'users', userId);
+      if (approve) {
+        await updateDoc(userRef, { isApproved: true });
+        setPendingUsers(prev => prev.filter(user => user.id !== userId));
+      } else {
+        // If rejected, delete the user
+        await deleteDoc(userRef);
+        setPendingUsers(prev => prev.filter(user => user.id !== userId));
+      }
+    } catch (error) {
+      console.error('Error handling user approval:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -276,6 +305,56 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+
+      {/* Pending Users Section */}
+      {pendingUsers.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Pending User Approvals</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {pendingUsers.map((user) => (
+                  <tr key={user.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        {user.firstName} {user.lastName}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.role}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => handleUserApproval(user.id, true)}
+                        className="text-green-600 hover:text-green-900 mr-4"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleUserApproval(user.id, false)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Reject
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

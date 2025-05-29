@@ -73,6 +73,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         role,
         firstName,
         lastName,
+        isApproved: role === 'admin' ? true : false, // Only admin users are auto-approved
         createdAt: new Date().toISOString()
       });
 
