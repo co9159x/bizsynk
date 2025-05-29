@@ -3,11 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 import { Scissors } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -16,12 +16,19 @@ export default function Login() {
     e.preventDefault();
     
     try {
-      setError('');
       setLoading(true);
       await signIn(email, password);
       navigate('/');
-    } catch (error) {
-      setError('Failed to sign in. Please check your credentials.');
+    } catch (error: any) {
+      if (error.code === 'auth/invalid-credential') {
+        toast.error('Invalid email or password');
+      } else if (error.code === 'auth/user-not-found') {
+        toast.error('No account found with this email');
+      } else if (error.code === 'auth/wrong-password') {
+        toast.error('Incorrect password');
+      } else {
+        toast.error('Failed to sign in. Please try again.');
+      }
       console.error(error);
     } finally {
       setLoading(false);
@@ -72,12 +79,6 @@ export default function Login() {
               />
             </div>
           </div>
-
-          {error && (
-            <div className="text-red-500 text-sm text-center">
-              {error}
-            </div>
-          )}
 
           <div>
             <button

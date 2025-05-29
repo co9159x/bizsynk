@@ -3,18 +3,17 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 import { Scissors } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function StaffLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
@@ -24,13 +23,13 @@ export default function StaffLogin() {
       navigate('/staff/home');
     } catch (error: any) {
       if (error.code === 'auth/invalid-credential') {
-        setError('Invalid email or password');
+        toast.error('Invalid email or password');
       } else if (error.code === 'auth/user-not-found') {
-        setError('No account found with this email');
+        toast.error('No account found with this email');
       } else if (error.code === 'auth/wrong-password') {
-        setError('Incorrect password');
+        toast.error('Incorrect password');
       } else {
-        setError('Failed to log in. Please try again.');
+        toast.error('Failed to log in. Please try again.');
       }
       console.error('Login error:', error);
     } finally {
@@ -57,11 +56,6 @@ export default function StaffLogin() {
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
-            </div>
-          )}
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="email-address" className="sr-only">

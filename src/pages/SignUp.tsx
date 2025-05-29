@@ -6,6 +6,7 @@ import { db } from '../lib/firebase';
 import { capitalizeWords } from '../utils/format';
 import PasswordInput from '../components/PasswordInput';
 import { Scissors } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const STAFF_ROLES = [
   'Cashier',
@@ -60,8 +61,12 @@ export default function SignUp() {
       });
 
       navigate('/staff/home');
-    } catch (error) {
-      setError('Failed to create an account. Please try again.');
+    } catch (error: any) {
+      if (error.code === 'auth/email-already-in-use') {
+        toast.error('This email is already registered. Please use a different email or sign in.');
+      } else {
+        toast.error('Failed to create an account. Please try again.');
+      }
       console.error(error);
     } finally {
       setLoading(false);
