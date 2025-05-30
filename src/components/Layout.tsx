@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Scissors, Calendar, Users, Package, LayoutDashboard, LogOut, Home, MapPin } from 'lucide-react';
+import { Scissors, Calendar, Users, Package, LayoutDashboard, LogOut, Home, MapPin, Download } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 // Define navigation items for different roles
@@ -35,6 +35,16 @@ export default function Layout() {
     }
   };
 
+  const handleDownloadApp = () => {
+    // Create a temporary link element to trigger download
+    const link = document.createElement('a');
+    link.href = '/bizsynk.apk'; // The APK file should be in your public folder
+    link.download = 'bizsynk.apk';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Get the home path based on user role
   const homePath = userRole === 'admin' ? '/admin/home' : '/staff/home';
 
@@ -65,6 +75,13 @@ export default function Layout() {
                   {label}
                 </Link>
               ))}
+              <button
+                onClick={handleDownloadApp}
+                className="bg-green-500 hover:bg-green-600 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download App
+              </button>
               <button
                 onClick={handleLogout}
                 className="hover:bg-purple-500 px-3 py-2 rounded-md text-sm font-medium flex items-center"

@@ -13,7 +13,11 @@
     "add-staff": "npm run build-scripts && node dist/scripts/add-staff.js",
     "check-staff": "npm run build-scripts && node dist/scripts/check-staff.js",
     "initialize-db": "ts-node --esm src/scripts/initializeDatabase.ts",
-    "setup-services": "dotenv -e .env -- ts-node scripts/add-services.ts"
+    "setup-services": "dotenv -e .env -- ts-node scripts/add-services.ts",
+    "cap:sync": "npm run build && npx cap sync",
+    "cap:add:android": "npx cap add android",
+    "cap:open:android": "npx cap open android",
+    "cap:build:android": "npm run cap:sync && npx cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^7.2.0",
