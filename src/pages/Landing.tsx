@@ -13,10 +13,19 @@ import {
   ArrowRight
 } from 'lucide-react';
 import RoleSelectionModal from '../components/RoleSelectionModal';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 
 export default function Landing() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+
+  useEffect(() => {
+    const checkPlatform = () => {
+      setIsAndroid(Capacitor.getPlatform() === 'android');
+    };
+    checkPlatform();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
@@ -67,6 +76,7 @@ export default function Landing() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
+              className="flex space-x-4"
             >
               <button
                 onClick={() => setIsModalOpen(true)}
@@ -74,6 +84,22 @@ export default function Landing() {
               >
                 Get Started
               </button>
+              {!isAndroid && (
+                <button
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = '/bizsynk.apk';
+                    link.download = 'bizsynk.apk';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                  className="w-full flex items-center justify-center px-8 py-3 border border-purple-600 text-base font-medium rounded-md text-purple-600 bg-white hover:bg-purple-50 md:py-4 md:text-lg md:px-10"
+                >
+                  <Smartphone className="h-5 w-5 mr-2" />
+                  Download Android App
+                </button>
+              )}
             </motion.div>
           </div>
         </div>
